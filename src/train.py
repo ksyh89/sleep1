@@ -43,6 +43,7 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     test_label_onehot = np.array([np.eye(int(np.max(test_label)+1), dtype=np.int_)[int(label)] for label in test_label])
     
     test_AUC = train_utils.compute_AUC(test_label_onehot, test_preds)
+    test_AUC_micro = train_utils.compute_AUC_micro(test_label_onehot, test_preds)
     test_accuracy = train_utils.compute_accuracy(test_label, test_preds)
 
 
@@ -53,10 +54,17 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     train_label_onehot = np.array([np.eye(int(np.max(train_label)+1), dtype=np.int_)[int(label)] for label in train_label])
 
     train_AUC = train_utils.compute_AUC(train_label_onehot, train_preds)
+    train_AUC_micro = train_utils.compute_AUC_micro(train_label_onehot, train_preds)
     train_accuracy = train_utils.compute_accuracy(train_label, train_preds)
 
     train_result.test_AUC_list.append("%.04f" % test_AUC)
+    train_result.test_AUC_list_class.append(test_AUC_micro)
     train_result.test_accuracy_list.append("%.04f" % test_accuracy)
+
+    #print(f'train_AUC_micro is {train_AUC_micro}')
+    #print(f'train_AUC is {train_AUC}')
+    #print(f'test_AUC_micro is {test_AUC_micro}')
+    #print(f'test_AUC is {test_AUC}')
 
     return train_AUC, test_AUC, train_accuracy, test_accuracy, test_preds
 
@@ -64,7 +72,7 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
 def compute_contributing_variables(model, test_dataset):
     print("Evaluating contributing variables")
     model.train(False)
-    variable_by_column = np.load("../datasets/severity_no_space_columnnames.npy")
+    variable_by_column = np.load("../datasets/severity4_no_space_columnnames.npy")
     #variable_by_column = np.array([v.replace("HE_ast", "HE_alt") for v in variable_by_column])
     assert variable_by_column.shape[0] == test_dataset.data.shape[1] - 1, f'{variable_by_column.shape[0]}  {test_dataset.data.shape[1] - 1}'
     variables = np.unique(variable_by_column)
@@ -466,18 +474,25 @@ def train(info: TrainInformation, split, fold):
     test_preds = train_utils.get_preds(test_input, model)
     test_label_onehot = np.array([np.eye(int(np.max(test_label)+1), dtype=np.int_)[int(label)] for label in test_label])
     test_AUC = train_utils.compute_AUC(test_label_onehot, test_preds)
-    train_utils.plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath=savepath.replace(".pt", "_AUC.png"))
+    roc_auc = train_utils.plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath=savepath.replace(".pt", "_AUC.png"))
 
     contributing_variables = compute_contributing_variables(model, test_dataset)
     with open(os.path.join(savedir, "contributing_variables_epoch_%04d_fold_%02d.txt" % (best_test_epoch, train_dataset.split)), "w") as f:
         for (v, auc) in contributing_variables:
             f.write("%s %f\n" % (v, auc))
 
-    
+    print(f'roc_auc is {roc_auc}')
+
+    auc_class = []
+    for class_num in range(int(np.max(test_label))+1):
+        auc_class.append(roc_auc[class_num])
+
+    print(f'auc_class is {auc_class}')
+
     info.split_index = split
     info.result_dict = train_result
     info.save_result()
-    return train_result
+    return train_result, auc_class
 
 
 def run(filename):
@@ -488,6 +503,8 @@ def run(filename):
     fold = info.FOLD
 
     test_AUCs_by_split = []
+    test_AUCs_by_split_class = []
+    test_AUCs_by_split_class_test = []
     for split in range(fold):
         
         #if split % 3 > 0:
@@ -500,22 +517,54 @@ def run(filename):
             train_ml_compare(info, split, fold)
             continue
         
-        result = train(info, split, fold)
+        result, auc_class = train(info, split, fold)
         test_AUCs = [float(auc) for auc in result.test_AUC_list]
         test_AUCs_by_split.append(test_AUCs)
-        
+        test_AUCs_by_split_class.append(np.array(result.test_AUC_list_class))
+        test_AUCs_by_split_class_test.append(auc_class)
+
+        print(f'test_AUCs_by_split is {test_AUCs_by_split}')
+        print(f'test_AUCs_by_split_class is {test_AUCs_by_split_class}')
+        print(f'test_AUCs_by_split_class_test is {test_AUCs_by_split_class_test}')
+
+        print(f'np.array(test_AUCs_by_split).shape is {np.array(test_AUCs_by_split).shape}')
+        print(f'np.array(test_AUCs_by_split_class).shape is {np.array(test_AUCs_by_split_class).shape}')
+        print(f'np.array(test_AUCs_by_split_class_test).shape is {np.array(test_AUCs_by_split_class_test).shape}')
 
     with open("result.txt", "a") as f:
         test_AUCs_by_split = np.array(test_AUCs_by_split)
         test_AUCs_by_epoch = test_AUCs_by_split.mean(axis=0)
+        test_AUCs_by_split_class = np.array(test_AUCs_by_split_class)
+        test_AUCs_by_epoch_class = np.transpose(test_AUCs_by_split_class.mean(axis=0))
+        test_AUCs_by_split_class_test = np.array(test_AUCs_by_split_class_test)
+        test_AUCs_by_epoch_class_test = test_AUCs_by_split_class_test.mean(axis=0)
         best_test_epoch = np.argmax(test_AUCs_by_epoch)
         best_test_AUC = test_AUCs_by_epoch[best_test_epoch]
         #f.write(str(info) + "/n")
         f.write("Name: %s\n" % info.NAME)
         f.write("average test AUC: %f %d\n" % (best_test_AUC, best_test_epoch))
+        
+        f.write("\n")
+        f.write("best epoch\n")
+        for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
+            f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch], best_test_epoch))
+        
+        f.write("\n")
+        f.write("test\n")
+        for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class_test):
+            f.write("average test AUC for %d class : %f\n" % (class_number, mean_auc_per_class))
+        
+        f.write("\n")
+        f.write("best\n")
+        for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
+            best_test_epoch_class = np.argmax(mean_auc_per_class)        
+            f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch_class], best_test_epoch_class))
+
+
+
 
 
 if __name__ == "__main__":
     # train 함수를 직접 호출했을 때 실행.
-    data_path = "../datasets/medical_data_6_no_space.csv"
+    data_path = "../datasets/severity4.csv"
     run(data_path)

@@ -20,6 +20,7 @@ class TrainResult:
         self.best_test_AUC = 0
         self.best_test_epoch = 0
         self.test_AUC_list = []
+        self.test_AUC_list_class = []
         self.test_accuracy_list = []
 
         self.best_val_AUC = 0

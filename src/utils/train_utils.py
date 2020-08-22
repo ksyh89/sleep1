@@ -43,6 +43,34 @@ def compute_AUC(y, preds):
     AUC = roc_auc_score(y, preds)
     return AUC
 
+def compute_AUC_micro(y, preds):
+    """AUC 계산."""
+    y = y.astype(np.long)#.reshape([-1])
+    preds = preds.astype(np.float32)#.reshape([-1])
+    #AUC_micro = roc_auc_score(y, preds, average='micro')
+
+    test_label_onehot = y
+    test_preds = preds
+    n_class = int(y.shape[1])
+    print(f'n_class is {n_class}')
+    
+    fpr = dict()
+    tpr = dict()
+    roc_auc = []
+    AUC_micro = []
+    from sklearn.metrics import auc
+    for i in range(n_class):
+        fpr[i], tpr[i], _ = roc_curve(test_label_onehot[:, i], test_preds[:, i])
+        roc_auc.append(auc(fpr[i], tpr[i]))
+
+    for i in range(n_class):
+        AUC_micro.append(roc_auc_score(test_label_onehot[:, i], test_preds[:, i]))
+
+    print(f'np.array(roc_auc).shape is {np.array(roc_auc).shape}')
+    print(f'np.array(AUC_micro).shape is {np.array(AUC_micro).shape}')
+
+    return roc_auc
+
 """
 def compute_accuracy(y, preds):
     #정확도 계산.
@@ -169,6 +197,8 @@ def plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath="AUC.png")
     plt.show()
     plt.savefig(savepath)
     print(savepath)
+
+    return roc_auc
 
 
 def plot_AUC_v2(preds_list, target, savepath="AUC.png"):
