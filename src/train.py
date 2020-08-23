@@ -463,7 +463,7 @@ def train(info: TrainInformation, split, fold):
         )
 
     savedir = "/content/drive/My Drive/research/frontiers/checkpoints/%s" % exp_name
-    best_test_epoch = 25
+    best_test_epoch = train_result.best_test_epoch #25
     savepath = "%s/epoch_%04d_fold_%02d.pt" % (savedir, best_test_epoch, train_dataset.split)
     #model.load_state_dict(torch.load(savepath))
     model = torch.load(savepath)
