@@ -40,10 +40,10 @@ def compute_AUC(y, preds):
     """AUC 계산."""
     y = y.astype(np.long)#.reshape([-1])
     preds = preds.astype(np.float32)#.reshape([-1])
-    AUC = roc_auc_score(y, preds)
+    AUC = roc_auc_score(y, preds, multi_class='ovr')
     return AUC
 
-def compute_AUC_micro(y, preds):
+def compute_AUC_per_class(y, preds):
     """AUC 계산."""
     y = y.astype(np.long)#.reshape([-1])
     preds = preds.astype(np.float32)#.reshape([-1])
@@ -52,24 +52,24 @@ def compute_AUC_micro(y, preds):
     test_label_onehot = y
     test_preds = preds
     n_class = int(y.shape[1])
-    print(f'n_class is {n_class}')
+    # print(f'n_class is {n_class}')
     
     fpr = dict()
     tpr = dict()
     roc_auc = []
-    AUC_micro = []
+    AUC_per_class = []
     from sklearn.metrics import auc
     for i in range(n_class):
         fpr[i], tpr[i], _ = roc_curve(test_label_onehot[:, i], test_preds[:, i])
         roc_auc.append(auc(fpr[i], tpr[i]))
 
     for i in range(n_class):
-        AUC_micro.append(roc_auc_score(test_label_onehot[:, i], test_preds[:, i]))
+        AUC_per_class.append(roc_auc_score(test_label_onehot[:, i], test_preds[:, i]))
 
-    print(f'np.array(roc_auc).shape is {np.array(roc_auc).shape}')
-    print(f'np.array(AUC_micro).shape is {np.array(AUC_micro).shape}')
+    # print(f'np.array(roc_auc).shape is {np.array(roc_auc).shape}')
+    # print(f'np.array(AUC_per_class).shape is {np.array(AUC_per_class).shape}')
 
-    return roc_auc
+    return AUC_per_class
 
 """
 def compute_accuracy(y, preds):

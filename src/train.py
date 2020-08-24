@@ -43,7 +43,7 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     test_label_onehot = np.array([np.eye(int(np.max(test_label)+1), dtype=np.int_)[int(label)] for label in test_label])
     
     test_AUC = train_utils.compute_AUC(test_label_onehot, test_preds)
-    test_AUC_micro = train_utils.compute_AUC_micro(test_label_onehot, test_preds)
+    test_AUC_per_class = train_utils.compute_AUC_per_class(test_label_onehot, test_preds)
     test_accuracy = train_utils.compute_accuracy(test_label, test_preds)
 
 
@@ -54,16 +54,16 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     train_label_onehot = np.array([np.eye(int(np.max(train_label)+1), dtype=np.int_)[int(label)] for label in train_label])
 
     train_AUC = train_utils.compute_AUC(train_label_onehot, train_preds)
-    train_AUC_micro = train_utils.compute_AUC_micro(train_label_onehot, train_preds)
+    train_AUC_per_class = train_utils.compute_AUC_per_class(train_label_onehot, train_preds)
     train_accuracy = train_utils.compute_accuracy(train_label, train_preds)
 
     train_result.test_AUC_list.append("%.04f" % test_AUC)
-    train_result.test_AUC_list_class.append(test_AUC_micro)
+    train_result.test_AUC_list_class.append(test_AUC_per_class)
     train_result.test_accuracy_list.append("%.04f" % test_accuracy)
 
-    #print(f'train_AUC_micro is {train_AUC_micro}')
+    #print(f'train_AUC_per_class is {train_AUC_per_class}')
     #print(f'train_AUC is {train_AUC}')
-    #print(f'test_AUC_micro is {test_AUC_micro}')
+    #print(f'test_AUC_per_class is {test_AUC_per_class}')
     #print(f'test_AUC is {test_AUC}')
 
     return train_AUC, test_AUC, train_accuracy, test_accuracy, test_preds
@@ -72,7 +72,7 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
 def compute_contributing_variables(model, test_dataset):
     print("Evaluating contributing variables")
     model.train(False)
-    variable_by_column = np.load("../datasets/severity4_no_space_columnnames.npy")
+    variable_by_column = np.load("../datasets/severity_no_space_columnnames.npy")
     #variable_by_column = np.array([v.replace("HE_ast", "HE_alt") for v in variable_by_column])
     assert variable_by_column.shape[0] == test_dataset.data.shape[1] - 1, f'{variable_by_column.shape[0]}  {test_dataset.data.shape[1] - 1}'
     variables = np.unique(variable_by_column)
@@ -399,23 +399,40 @@ def train_ml_compare(info: TrainInformation, split, fold):
     test_preds = train_utils.get_preds(test_dataset.data[:, 1:], model)
     train_utils.plot_AUC_v2([('Deep Neural Network', test_preds), ('Logistic Regression', preds_regressor), ('Random Forest', preds_forest), ('Support Vector Classifier', preds_svc)], test_dataset.data[:, :1], savepath=savepath)
 
-def train(info: TrainInformation, split, fold):
+def train(info: TrainInformation, split, fold, combination):
     """주어진 split에 대한 학습과 테스트를 진행한다."""
+    """
     bs = info.BS
     init_lr = info.INIT_LR
     lr_decay = info.LR_DECAY
     momentum = info.MOMENTUM
     weight_decay = info.WEIGHT_DECAY
     optimizer_method = info.OPTIMIZER_METHOD
-    epoch = info.EPOCH
     nchs = info.NCHS
-    filename = info.FILENAME
     model_name = info.MODEL_NAME
+    epoch = info.EPOCH
+    use_data_dropout = info.USE_DATA_DROPOUT
+    activation = info.ACTIVATION
+    """
+    bs = combination[0]
+    init_lr = combination[1]
+    lr_decay = combination[2]
+    momentum = combination[3]
+    weight_decay = combination[4]
+    optimizer_method = combination[5]
+    nchs = combination[6]
+    model_name = combination[7]
+    epoch = combination[8]
+    use_data_dropout = combination[9]
+    activation = combination[10]
+
     exp_name = info.NAME
+
+    filename = info.FILENAME
 
     print("Using File {}".format(filename))
 
-    train_dataset = Dataset(split=split, fold=fold, phase="train", filename=filename, use_data_dropout=info.USE_DATA_DROPOUT)
+    train_dataset = Dataset(split=split, fold=fold, phase="train", filename=filename, use_data_dropout=use_data_dropout)
     #val_dataset = Dataset(split=split, fold=fold, phase="val", filename=filename)
     test_dataset = Dataset(split=split, fold=fold, phase="test", filename=filename, use_data_dropout=False)
 
@@ -424,7 +441,7 @@ def train(info: TrainInformation, split, fold):
     nchs[-1] = int(np.max(test_label)) + 1
     print(f'nchs is {nchs}')
 
-    model = get_classifier_model(model_name, train_dataset.feature_size, nchs, info.ACTIVATION)
+    model = get_classifier_model(model_name, train_dataset.feature_size, nchs, activation)
     
 
     print(model)
@@ -463,7 +480,7 @@ def train(info: TrainInformation, split, fold):
         )
 
     savedir = "/content/drive/My Drive/research/frontiers/checkpoints/%s" % exp_name
-    best_test_epoch = train_result.best_test_epoch #25
+    best_test_epoch = train_result.best_test_epoch # 25
     savepath = "%s/epoch_%04d_fold_%02d.pt" % (savedir, best_test_epoch, train_dataset.split)
     #model.load_state_dict(torch.load(savepath))
     model = torch.load(savepath)
@@ -476,10 +493,12 @@ def train(info: TrainInformation, split, fold):
     test_AUC = train_utils.compute_AUC(test_label_onehot, test_preds)
     roc_auc = train_utils.plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath=savepath.replace(".pt", "_AUC.png"))
 
+    """
     contributing_variables = compute_contributing_variables(model, test_dataset)
     with open(os.path.join(savedir, "contributing_variables_epoch_%04d_fold_%02d.txt" % (best_test_epoch, train_dataset.split)), "w") as f:
         for (v, auc) in contributing_variables:
             f.write("%s %f\n" % (v, auc))
+    """
 
     print(f'roc_auc is {roc_auc}')
 
@@ -496,75 +515,126 @@ def train(info: TrainInformation, split, fold):
 
 
 def run(filename):
-    """실험할 세팅을 불러오고, 그에 따라서 실험을 수행한다."""
-    info = TrainInformation(filename)
-    np.random.seed(info.SEED)
-    torch.manual_seed(info.SEED)
-    fold = info.FOLD
+	"""실험할 세팅을 불러오고, 그에 따라서 실험을 수행한다."""
 
-    test_AUCs_by_split = []
-    test_AUCs_by_split_class = []
-    test_AUCs_by_split_class_test = []
-    for split in range(fold):
-        
-        #if split % 3 > 0:
-        #    print("Skipping split %d" % split)
-        #    continue
+	bs = [4096] # 4096, 2048, 1024 
+	init_lr = [0.100000, 0.200000] # 0.100000, 0.150000, 0.200000, 0.050000
+	lr_decay = [0.999] # 0.999, 0.99, 0.9, 0.8, 0.85
+	momentum = [0.9, 0.999, 0.8] # 0.9, 0.99, 0.999, 0.8, 0.85
+	weight_decay = [1e-6] # 1e-6, 1e-7, 5e-7, 5e-6
+	optimizer_method = ["SGD", "Adadelta"] # "SGD", "Adadelta"
+	nchs = [[2048, 2048, 2048, 512, 1]] # [2048, 2048, 2048, 512, 1], [512, 512, 512, 512, 1], [512, 512, 1], [4096, 1] 
+	model_name = ["ClassifierWithEmbedding"] # "ClassifierWithEmbedding", "Classifier", "ClassifierWithDropout", "ClassifierWithBatchNorm", "ClassifierWithAttention"
+	epoch = [26] # 26, 30, 40, 50
+	use_data_dropout = ["use_data_dropout"] # "use_data_dropout", None
+	activation = ["swish"] # "swish", "tanh", "ReLU", "LReLU"
 
-        if False:
-            #train_logisticregressoin(info, split, fold)
-            #train_supportvectormachine(info, split, fold)
-            train_ml_compare(info, split, fold)
-            continue
-        
-        result, auc_class = train(info, split, fold)
-        test_AUCs = [float(auc) for auc in result.test_AUC_list]
-        test_AUCs_by_split.append(test_AUCs)
-        test_AUCs_by_split_class.append(np.array(result.test_AUC_list_class))
-        test_AUCs_by_split_class_test.append(auc_class)
+	items = [bs, init_lr, lr_decay, momentum, weight_decay, optimizer_method, nchs, model_name, epoch, use_data_dropout, activation]
 
-        print(f'test_AUCs_by_split is {test_AUCs_by_split}')
-        print(f'test_AUCs_by_split_class is {test_AUCs_by_split_class}')
-        print(f'test_AUCs_by_split_class_test is {test_AUCs_by_split_class_test}')
+	from itertools import product
+	combinations = list(product(*items))
+	
+	# cut combination number 
+	#combinations = combinations[100:]
+	
+	total_combination_number = len(combinations)
+	print(f'We will check {total_combination_number} combinations')
 
-        print(f'np.array(test_AUCs_by_split).shape is {np.array(test_AUCs_by_split).shape}')
-        print(f'np.array(test_AUCs_by_split_class).shape is {np.array(test_AUCs_by_split_class).shape}')
-        print(f'np.array(test_AUCs_by_split_class_test).shape is {np.array(test_AUCs_by_split_class_test).shape}')
+	import openpyxl
+	write_wb = openpyxl.Workbook()
+	write_ws = write_wb.create_sheet('table')
+	write_ws.append(['comb_index', 'bs', 'init_lr', 'lr_decay', 'momentum', 'weight_decay', 
+		'optimizer_method', 'nchs', 'model_name', 'epoch', 'use_data_dropout', 'activation', 
+		'best_test_auc', 'best_test_epoch', 'class 0', 'class 1', 'class 2', 'class 3'])
+	write_wb.save('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
 
-    with open("result.txt", "a") as f:
-        test_AUCs_by_split = np.array(test_AUCs_by_split)
-        test_AUCs_by_epoch = test_AUCs_by_split.mean(axis=0)
-        test_AUCs_by_split_class = np.array(test_AUCs_by_split_class)
-        test_AUCs_by_epoch_class = np.transpose(test_AUCs_by_split_class.mean(axis=0))
-        test_AUCs_by_split_class_test = np.array(test_AUCs_by_split_class_test)
-        test_AUCs_by_epoch_class_test = test_AUCs_by_split_class_test.mean(axis=0)
-        best_test_epoch = np.argmax(test_AUCs_by_epoch)
-        best_test_AUC = test_AUCs_by_epoch[best_test_epoch]
-        #f.write(str(info) + "/n")
-        f.write("Name: %s\n" % info.NAME)
-        f.write("average test AUC: %f %d\n" % (best_test_AUC, best_test_epoch))
-        
-        f.write("\n")
-        f.write("best epoch\n")
-        for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
-            f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch], best_test_epoch))
-        
-        f.write("\n")
-        f.write("test\n")
-        for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class_test):
-            f.write("average test AUC for %d class : %f\n" % (class_number, mean_auc_per_class))
-        
-        f.write("\n")
-        f.write("best\n")
-        for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
-            best_test_epoch_class = np.argmax(mean_auc_per_class)        
-            f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch_class], best_test_epoch_class))
+	for comb_index, combination in enumerate(combinations):
+		info = TrainInformation(filename)
+		np.random.seed(info.SEED)
+		torch.manual_seed(info.SEED)
+		fold = info.FOLD
+
+		test_AUCs_by_split = []
+		test_AUCs_by_split_class = []
+		test_AUCs_by_split_class_test = []
+		for split in range(fold):
+
+			#if split % 3 > 0:
+			#    print("Skipping split %d" % split)
+			#    continue
 
 
+			if False:
+				#train_logisticregressoin(info, split, fold)
+				#train_supportvectormachine(info, split, fold)
+				train_ml_compare(info, split, fold)
+				continue
 
+			result, auc_class = train(info, split, fold, combination)
+			test_AUCs = [float(auc) for auc in result.test_AUC_list]
+			test_AUCs_by_split.append(test_AUCs)
+			test_AUCs_by_split_class.append(np.array(result.test_AUC_list_class))
+			test_AUCs_by_split_class_test.append(auc_class)
+
+			print(f'test_AUCs_by_split is {test_AUCs_by_split}')
+			print(f'test_AUCs_by_split_class is {test_AUCs_by_split_class}')
+			print(f'test_AUCs_by_split_class_test is {test_AUCs_by_split_class_test}')
+
+			print(f'np.array(test_AUCs_by_split).shape is {np.array(test_AUCs_by_split).shape}')
+			print(f'np.array(test_AUCs_by_split_class).shape is {np.array(test_AUCs_by_split_class).shape}')
+			print(f'np.array(test_AUCs_by_split_class_test).shape is {np.array(test_AUCs_by_split_class_test).shape}')
+
+		with open("result.txt", "a") as f:
+			test_AUCs_by_split = np.array(test_AUCs_by_split)
+			test_AUCs_by_epoch = test_AUCs_by_split.mean(axis=0)
+			test_AUCs_by_split_class = np.array(test_AUCs_by_split_class)
+			test_AUCs_by_epoch_class = np.transpose(test_AUCs_by_split_class.mean(axis=0))
+			test_AUCs_by_split_class_test = np.array(test_AUCs_by_split_class_test)
+			test_AUCs_by_epoch_class_test = test_AUCs_by_split_class_test.mean(axis=0)
+			best_test_epoch = np.argmax(test_AUCs_by_epoch)
+			best_test_AUC = test_AUCs_by_epoch[best_test_epoch]
+			#f.write(str(info) + "/n")
+			f.write("Name: %s\n" % info.NAME)
+			f.write("average test AUC: %f %d\n" % (best_test_AUC, best_test_epoch))
+
+			f.write("\n")
+			f.write("best epoch\n")
+			for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
+				f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch], best_test_epoch))
+
+			f.write("\n")
+			f.write("test\n")
+			for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class_test):
+				f.write("average test AUC for %d class : %f\n" % (class_number, mean_auc_per_class))
+
+			f.write("\n")
+			f.write("best\n")
+			for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
+				best_test_epoch_class = np.argmax(mean_auc_per_class)        
+				f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch_class], best_test_epoch_class))
+			f.write("\n")
+			f.write("\n")
+
+		wb = openpyxl.load_workbook('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
+		sheet1 = wb['table']
+		print(f'combination is {combination}')
+		print(f'best_test_AUC is {best_test_AUC}')
+		print(f'best_test_epoch is {best_test_epoch}')
+		print(f'[best_test_AUC, best_test_epoch] is {[best_test_AUC, best_test_epoch]}')
+		print(f'test_AUCs_by_epoch_class is {test_AUCs_by_epoch_class}')
+		print(f'test_AUCs_by_epoch_class.shape is {test_AUCs_by_epoch_class.shape}')
+		
+		combination_str = []
+		for comb in combination:
+			combination_str.append(str(comb))
+
+		new_row = [comb_index] + list(combination_str) + [best_test_AUC, best_test_epoch] + np.transpose(test_AUCs_by_epoch_class)[best_test_epoch].tolist()
+		print(f'new_row is {new_row}')
+		sheet1.append(new_row)
+		wb.save('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
 
 
 if __name__ == "__main__":
     # train 함수를 직접 호출했을 때 실행.
-    data_path = "../datasets/severity4.csv"
+    data_path = "../datasets/medical_data_6_no_space.csv"
     run(data_path)
