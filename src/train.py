@@ -28,6 +28,10 @@ def set_optimizer(optimizer_method, model, init_lr, weight_decay, momentum=None)
         optimizer = torch.optim.Adadelta(
             model.parameters(), lr=init_lr, weight_decay=weight_decay
         )
+    elif optimizer_method == "Adam":
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=init_lr, weight_decay=weight_decay
+        )
     else:
         raise Exception("Unknown Optimizer {}".format(optimizer_method))
     return optimizer
@@ -636,5 +640,5 @@ def run(filename):
 
 if __name__ == "__main__":
     # train 함수를 직접 호출했을 때 실행.
-    data_path = "../datasets/medical_data_6_no_space.csv"
+    data_path = "../datasets/severity4_no_space.csv"
     run(data_path)
