@@ -76,7 +76,7 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
 def compute_contributing_variables(model, test_dataset):
     print("Evaluating contributing variables")
     model.train(False)
-    variable_by_column = np.load("../datasets/severity_no_space_columnnames.npy")
+    variable_by_column = np.load("../datasets/severity4_no_space_columnnames.npy")
     #variable_by_column = np.array([v.replace("HE_ast", "HE_alt") for v in variable_by_column])
     assert variable_by_column.shape[0] == test_dataset.data.shape[1] - 1, f'{variable_by_column.shape[0]}  {test_dataset.data.shape[1] - 1}'
     variables = np.unique(variable_by_column)
