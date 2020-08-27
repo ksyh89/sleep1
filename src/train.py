@@ -490,6 +490,9 @@ def train(info: TrainInformation, split, fold, combination):
     model = torch.load(savepath)
     model.eval()
 
+    os.rmdir(savedir)
+    # os.makedirs(savedir, exist_ok=True)
+
     test_input = test_dataset.data[:, 1:]
     test_label = test_dataset.data[:, :1]
     test_preds = train_utils.get_preds(test_input, model)
@@ -522,14 +525,14 @@ def run(filename):
 	"""실험할 세팅을 불러오고, 그에 따라서 실험을 수행한다."""
 
 	bs = [4096] # 4096, 2048, 1024 
-	init_lr = [0.100000, 0.200000] # 0.100000, 0.150000, 0.200000, 0.050000
+	init_lr = [0.050, 0.025] # 0.100000, 0.150000, 0.200000, 0.050000
 	lr_decay = [0.999] # 0.999, 0.99, 0.9, 0.8, 0.85
-	momentum = [0.9, 0.999, 0.8] # 0.9, 0.99, 0.999, 0.8, 0.85
+	momentum = [0.9] # 0.9, 0.99, 0.999, 0.8, 0.85
 	weight_decay = [1e-6] # 1e-6, 1e-7, 5e-7, 5e-6
-	optimizer_method = ["SGD", "Adadelta"] # "SGD", "Adadelta"
-	nchs = [[2048, 2048, 2048, 512, 1]] # [2048, 2048, 2048, 512, 1], [512, 512, 512, 512, 1], [512, 512, 1], [4096, 1] 
-	model_name = ["ClassifierWithEmbedding"] # "ClassifierWithEmbedding", "Classifier", "ClassifierWithDropout", "ClassifierWithBatchNorm", "ClassifierWithAttention"
-	epoch = [26] # 26, 30, 40, 50
+	optimizer_method = ["Adadelta"] # "SGD", "Adadelta"
+	nchs = [[2048, 2048, 2048, 2048, 2048, 2048, 512, 1], [2048, 2048, 2048, 2048, 2048, 512, 1]] # [2048, 2048, 2048, 512, 1], [512, 512, 512, 512, 1], [512, 512, 1], [4096, 1]
+	model_name = ["ClassifierWithAttention"] # "ClassifierWithEmbedding", "Classifier", "ClassifierWithDropout", "ClassifierWithBatchNorm", "ClassifierWithAttention"
+	epoch = [33] # 26, 30, 40, 50
 	use_data_dropout = ["use_data_dropout"] # "use_data_dropout", None
 	activation = ["swish"] # "swish", "tanh", "ReLU", "LReLU"
 
