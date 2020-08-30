@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.utils.data as data
+import shutil
 
 from dataset import Dataset
 from model import get_classifier_model
@@ -45,7 +46,7 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     test_label = test_dataset.data[:, :1]
     test_preds = train_utils.get_preds(test_input, model)
     test_label_onehot = np.array([np.eye(int(np.max(test_label)+1), dtype=np.int_)[int(label)] for label in test_label])
-    
+
     test_AUC = train_utils.compute_AUC(test_label_onehot, test_preds)
     test_AUC_per_class = train_utils.compute_AUC_per_class(test_label_onehot, test_preds)
     test_accuracy = train_utils.compute_accuracy(test_label, test_preds)
@@ -104,7 +105,7 @@ def compute_contributing_variables(model, test_dataset):
     sorted_pairs = [(v, auc) for (v, auc) in zip(sorted_variables, sorted_AUCs)]
     for i, (v, auc) in enumerate(sorted_pairs[:20]):
         print("%03d: %s %f" % (i, v, auc))
-        
+
     return [(v, auc) for (v, auc) in zip(variables, AUCs)]
 
 
@@ -124,7 +125,7 @@ def train_step(
     global prev_plot
     model.train(True)
     for _, (X, y) in enumerate(data_loader):
-        
+
         y = torch.tensor(y, dtype=torch.long)
 
         optimizer.zero_grad()
@@ -227,7 +228,7 @@ def train_logisticregressoin(info: TrainInformation, split, fold):
 
     test_preds = train_utils.get_preds(test_dataset.data[:, 1:], model)
     train_utils.plot_AUC_v2([('Deep Neural Network', test_preds), ('Logistic Regression', preds)], test_dataset.data[:, :1], savepath=savepath)
-    
+
 def train_supportvectormachine(info: TrainInformation, split, fold):
     """주어진 split에 대한 학습과 테스트를 진행한다."""
     bs = info.BS
@@ -348,7 +349,7 @@ def train_ml_compare(info: TrainInformation, split, fold):
 
     train_input = train_dataset.train_data[:, 1:]
     train_label = test_dataset.train_data[:, :1]
-    
+
     # logisticregressoin ######################
 
     import sklearn.linear_model
@@ -372,7 +373,7 @@ def train_ml_compare(info: TrainInformation, split, fold):
     preds_forest = forest.predict_proba(test_dataset.data[:, 1:])[:, 1]
     auc_forest = train_utils.compute_AUC(test_dataset.data[:, :1], preds_forest)
     print(f'auc_forest is {auc_forest}')
-    
+
     ###########################################
 
 
@@ -446,7 +447,7 @@ def train(info: TrainInformation, split, fold, combination):
     print(f'nchs is {nchs}')
 
     model = get_classifier_model(model_name, train_dataset.feature_size, nchs, activation)
-    
+
 
     print(model)
 
@@ -490,7 +491,8 @@ def train(info: TrainInformation, split, fold, combination):
     model = torch.load(savepath)
     model.eval()
 
-    os.rmdir(savedir)
+    shutil.rmtree(savedir)
+    os.mkdir(savedir)
     # os.makedirs(savedir, exist_ok=True)
 
     test_input = test_dataset.data[:, 1:]
@@ -524,7 +526,7 @@ def train(info: TrainInformation, split, fold, combination):
 def run(filename):
 	"""실험할 세팅을 불러오고, 그에 따라서 실험을 수행한다."""
 
-	bs = [4096] # 4096, 2048, 1024 
+	bs = [4096] # 4096, 2048, 1024
 	init_lr = [0.050, 0.025] # 0.100000, 0.150000, 0.200000, 0.050000
 	lr_decay = [0.999] # 0.999, 0.99, 0.9, 0.8, 0.85
 	momentum = [0.9] # 0.9, 0.99, 0.999, 0.8, 0.85
@@ -540,18 +542,18 @@ def run(filename):
 
 	from itertools import product
 	combinations = list(product(*items))
-	
-	# cut combination number 
+
+	# cut combination number
 	#combinations = combinations[100:]
-	
+
 	total_combination_number = len(combinations)
 	print(f'We will check {total_combination_number} combinations')
 
 	import openpyxl
 	write_wb = openpyxl.Workbook()
 	write_ws = write_wb.create_sheet('table')
-	write_ws.append(['comb_index', 'bs', 'init_lr', 'lr_decay', 'momentum', 'weight_decay', 
-		'optimizer_method', 'nchs', 'model_name', 'epoch', 'use_data_dropout', 'activation', 
+	write_ws.append(['comb_index', 'bs', 'init_lr', 'lr_decay', 'momentum', 'weight_decay',
+		'optimizer_method', 'nchs', 'model_name', 'epoch', 'use_data_dropout', 'activation',
 		'best_test_auc', 'best_test_epoch', 'class 0', 'class 1', 'class 2', 'class 3'])
 	write_wb.save('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
 
@@ -617,7 +619,7 @@ def run(filename):
 			f.write("\n")
 			f.write("best\n")
 			for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
-				best_test_epoch_class = np.argmax(mean_auc_per_class)        
+				best_test_epoch_class = np.argmax(mean_auc_per_class)
 				f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch_class], best_test_epoch_class))
 			f.write("\n")
 			f.write("\n")
@@ -630,7 +632,7 @@ def run(filename):
 		print(f'[best_test_AUC, best_test_epoch] is {[best_test_AUC, best_test_epoch]}')
 		print(f'test_AUCs_by_epoch_class is {test_AUCs_by_epoch_class}')
 		print(f'test_AUCs_by_epoch_class.shape is {test_AUCs_by_epoch_class.shape}')
-		
+
 		combination_str = []
 		for comb in combination:
 			combination_str.append(str(comb))
