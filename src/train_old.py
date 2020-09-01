@@ -404,7 +404,7 @@ def train_ml_compare(info: TrainInformation, split, fold):
     test_preds = train_utils.get_preds(test_dataset.data[:, 1:], model)
     train_utils.plot_AUC_v2([('Deep Neural Network', test_preds), ('Logistic Regression', preds_regressor), ('Random Forest', preds_forest), ('Support Vector Classifier', preds_svc)], test_dataset.data[:, :1], savepath=savepath)
 
-def train(info: TrainInformation, split, fold, combination, my_drive):
+def train(info: TrainInformation, split, fold, combination):
     """주어진 split에 대한 학습과 테스트를 진행한다."""
     """
     bs = info.BS
@@ -491,21 +491,9 @@ def train(info: TrainInformation, split, fold, combination, my_drive):
     model = torch.load(savepath)
     model.eval()
 
-    savepath_filenames = os.listdir(savepath)
-    """
-    for savepath_filename in savepath_filenames:
-        full_filename = os.path.join(savepath, savepath_filename)
-        open(full_filename, 'w')
-    """
     shutil.rmtree(savedir)
     os.mkdir(savedir)
     # os.makedirs(savedir, exist_ok=True)
-
-    for a_file in my_drive.ListFile({'q': "trashed = true"}).GetList():
-        # print the name of the file being deleted.
-        print(f'the file {a_file["title"]}, is about to get deleted permanently.')
-        # delete the file permanently.
-        a_file.Delete()
 
     test_input = test_dataset.data[:, 1:]
     test_label = test_dataset.data[:, :1]
@@ -535,130 +523,124 @@ def train(info: TrainInformation, split, fold, combination, my_drive):
     return train_result, auc_class
 
 
-def run(filename, my_drive):
+def run(filename):
+	"""실험할 세팅을 불러오고, 그에 따라서 실험을 수행한다."""
 
-    """실험할 세팅을 불러오고, 그에 따라서 실험을 수행한다."""
-    for a_file in my_drive.ListFile({'q': "trashed = true"}).GetList():
-        # print the name of the file being deleted.
-        print(f'the file {a_file["title"]}, is about to get deleted permanently.')
-        # delete the file permanently.
-        a_file.Delete()
+	bs = [4096] # 4096, 2048, 1024
+	init_lr = [0.050, 0.025] # 0.100000, 0.150000, 0.200000, 0.050000
+	lr_decay = [0.999] # 0.999, 0.99, 0.9, 0.8, 0.85
+	momentum = [0.9] # 0.9, 0.99, 0.999, 0.8, 0.85
+	weight_decay = [1e-6] # 1e-6, 1e-7, 5e-7, 5e-6
+	optimizer_method = ["Adadelta"] # "SGD", "Adadelta"
+	nchs = [[2048, 2048, 2048, 2048, 2048, 2048, 512, 1], [2048, 2048, 2048, 2048, 2048, 512, 1]] # [2048, 2048, 2048, 512, 1], [512, 512, 512, 512, 1], [512, 512, 1], [4096, 1]
+	model_name = ["ClassifierWithAttention"] # "ClassifierWithEmbedding", "Classifier", "ClassifierWithDropout", "ClassifierWithBatchNorm", "ClassifierWithAttention"
+	epoch = [33] # 26, 30, 40, 50
+	use_data_dropout = ["use_data_dropout"] # "use_data_dropout", None
+	activation = ["swish"] # "swish", "tanh", "ReLU", "LReLU"
 
-    bs = [4096]  # 4096, 2048, 1024
-    init_lr = [0.050, 0.025]  # 0.100000, 0.150000, 0.200000, 0.050000
-    lr_decay = [0.999]  # 0.999, 0.99, 0.9, 0.8, 0.85
-    momentum = [0.9]  # 0.9, 0.99, 0.999, 0.8, 0.85
-    weight_decay = [1e-6]  # 1e-6, 1e-7, 5e-7, 5e-6
-    optimizer_method = ["Adadelta"]  # "SGD", "Adadelta"
-    nchs = [[2048, 2048, 2048, 2048, 2048, 2048, 512, 1], [2048, 2048, 2048, 2048, 2048, 512, 1]]  # [2048, 2048, 2048, 512, 1], [512, 512, 512, 512, 1], [512, 512, 1], [4096, 1]
-    model_name = ["ClassifierWithAttention"]  # "ClassifierWithEmbedding", "Classifier", "ClassifierWithDropout", "ClassifierWithBatchNorm", "ClassifierWithAttention"
-    epoch = [33]  # 26, 30, 40, 50
-    use_data_dropout = ["use_data_dropout"]  # "use_data_dropout", None
-    activation = ["swish"]  # "swish", "tanh", "ReLU", "LReLU"
+	items = [bs, init_lr, lr_decay, momentum, weight_decay, optimizer_method, nchs, model_name, epoch, use_data_dropout, activation]
 
-    items = [bs, init_lr, lr_decay, momentum, weight_decay, optimizer_method, nchs, model_name, epoch, use_data_dropout, activation]
+	from itertools import product
+	combinations = list(product(*items))
 
-    from itertools import product
-    combinations = list(product(*items))
+	# cut combination number
+	#combinations = combinations[100:]
 
-    # cut combination number
-    #combinations = combinations[100:]
+	total_combination_number = len(combinations)
+	print(f'We will check {total_combination_number} combinations')
 
-    total_combination_number = len(combinations)
-    print(f'We will check {total_combination_number} combinations')
+	import openpyxl
+	write_wb = openpyxl.Workbook()
+	write_ws = write_wb.create_sheet('table')
+	write_ws.append(['comb_index', 'bs', 'init_lr', 'lr_decay', 'momentum', 'weight_decay',
+		'optimizer_method', 'nchs', 'model_name', 'epoch', 'use_data_dropout', 'activation',
+		'best_test_auc', 'best_test_epoch', 'class 0', 'class 1', 'class 2', 'class 3'])
+	write_wb.save('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
 
-    import openpyxl
-    write_wb = openpyxl.Workbook()
-    write_ws = write_wb.create_sheet('table')
-    write_ws.append(['comb_index', 'bs', 'init_lr', 'lr_decay', 'momentum', 'weight_decay',
-        'optimizer_method', 'nchs', 'model_name', 'epoch', 'use_data_dropout', 'activation',
-        'best_test_auc', 'best_test_epoch', 'class 0', 'class 1', 'class 2', 'class 3'])
-    write_wb.save('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
+	for comb_index, combination in enumerate(combinations):
+		info = TrainInformation(filename)
+		np.random.seed(info.SEED)
+		torch.manual_seed(info.SEED)
+		fold = info.FOLD
 
-    for comb_index, combination in enumerate(combinations):
-        info = TrainInformation(filename)
-        np.random.seed(info.SEED)
-        torch.manual_seed(info.SEED)
-        fold = info.FOLD
+		test_AUCs_by_split = []
+		test_AUCs_by_split_class = []
+		test_AUCs_by_split_class_test = []
+		for split in range(fold):
 
-        test_AUCs_by_split = []
-        test_AUCs_by_split_class = []
-        test_AUCs_by_split_class_test = []
-        for split in range(fold):
-
-            #if split % 3 > 0:
-            #    print("Skipping split %d" % split)
-            #    continue
+			#if split % 3 > 0:
+			#    print("Skipping split %d" % split)
+			#    continue
 
 
-            if False:
-                #train_logisticregressoin(info, split, fold)
-                #train_supportvectormachine(info, split, fold)
-                train_ml_compare(info, split, fold)
-                continue
+			if False:
+				#train_logisticregressoin(info, split, fold)
+				#train_supportvectormachine(info, split, fold)
+				train_ml_compare(info, split, fold)
+				continue
 
-            result, auc_class = train(info, split, fold, combination, my_drive)
-            test_AUCs = [float(auc) for auc in result.test_AUC_list]
-            test_AUCs_by_split.append(test_AUCs)
-            test_AUCs_by_split_class.append(np.array(result.test_AUC_list_class))
-            test_AUCs_by_split_class_test.append(auc_class)
+			result, auc_class = train(info, split, fold, combination)
+			test_AUCs = [float(auc) for auc in result.test_AUC_list]
+			test_AUCs_by_split.append(test_AUCs)
+			test_AUCs_by_split_class.append(np.array(result.test_AUC_list_class))
+			test_AUCs_by_split_class_test.append(auc_class)
 
-            print(f'test_AUCs_by_split is {test_AUCs_by_split}')
-            print(f'test_AUCs_by_split_class is {test_AUCs_by_split_class}')
-            print(f'test_AUCs_by_split_class_test is {test_AUCs_by_split_class_test}')
+			print(f'test_AUCs_by_split is {test_AUCs_by_split}')
+			print(f'test_AUCs_by_split_class is {test_AUCs_by_split_class}')
+			print(f'test_AUCs_by_split_class_test is {test_AUCs_by_split_class_test}')
 
-            print(f'np.array(test_AUCs_by_split).shape is {np.array(test_AUCs_by_split).shape}')
-            print(f'np.array(test_AUCs_by_split_class).shape is {np.array(test_AUCs_by_split_class).shape}')
-            print(f'np.array(test_AUCs_by_split_class_test).shape is {np.array(test_AUCs_by_split_class_test).shape}')
+			print(f'np.array(test_AUCs_by_split).shape is {np.array(test_AUCs_by_split).shape}')
+			print(f'np.array(test_AUCs_by_split_class).shape is {np.array(test_AUCs_by_split_class).shape}')
+			print(f'np.array(test_AUCs_by_split_class_test).shape is {np.array(test_AUCs_by_split_class_test).shape}')
 
-        with open("result.txt", "a") as f:
-            test_AUCs_by_split = np.array(test_AUCs_by_split)
-            test_AUCs_by_epoch = test_AUCs_by_split.mean(axis=0)
-            test_AUCs_by_split_class = np.array(test_AUCs_by_split_class)
-            test_AUCs_by_epoch_class = np.transpose(test_AUCs_by_split_class.mean(axis=0))
-            test_AUCs_by_split_class_test = np.array(test_AUCs_by_split_class_test)
-            test_AUCs_by_epoch_class_test = test_AUCs_by_split_class_test.mean(axis=0)
-            best_test_epoch = np.argmax(test_AUCs_by_epoch)
-            best_test_AUC = test_AUCs_by_epoch[best_test_epoch]
-            #f.write(str(info) + "/n")
-            f.write("Name: %s\n" % info.NAME)
-            f.write("average test AUC: %f %d\n" % (best_test_AUC, best_test_epoch))
+		with open("result.txt", "a") as f:
+			test_AUCs_by_split = np.array(test_AUCs_by_split)
+			test_AUCs_by_epoch = test_AUCs_by_split.mean(axis=0)
+			test_AUCs_by_split_class = np.array(test_AUCs_by_split_class)
+			test_AUCs_by_epoch_class = np.transpose(test_AUCs_by_split_class.mean(axis=0))
+			test_AUCs_by_split_class_test = np.array(test_AUCs_by_split_class_test)
+			test_AUCs_by_epoch_class_test = test_AUCs_by_split_class_test.mean(axis=0)
+			best_test_epoch = np.argmax(test_AUCs_by_epoch)
+			best_test_AUC = test_AUCs_by_epoch[best_test_epoch]
+			#f.write(str(info) + "/n")
+			f.write("Name: %s\n" % info.NAME)
+			f.write("average test AUC: %f %d\n" % (best_test_AUC, best_test_epoch))
 
-            f.write("\n")
-            f.write("best epoch\n")
-            for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
-                f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch], best_test_epoch))
+			f.write("\n")
+			f.write("best epoch\n")
+			for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
+				f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch], best_test_epoch))
 
-            f.write("\n")
-            f.write("test\n")
-            for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class_test):
-                f.write("average test AUC for %d class : %f\n" % (class_number, mean_auc_per_class))
+			f.write("\n")
+			f.write("test\n")
+			for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class_test):
+				f.write("average test AUC for %d class : %f\n" % (class_number, mean_auc_per_class))
 
-            f.write("\n")
-            f.write("best\n")
-            for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
-                best_test_epoch_class = np.argmax(mean_auc_per_class)
-                f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch_class], best_test_epoch_class))
-            f.write("\n")
-            f.write("\n")
+			f.write("\n")
+			f.write("best\n")
+			for class_number, mean_auc_per_class in enumerate(test_AUCs_by_epoch_class):
+				best_test_epoch_class = np.argmax(mean_auc_per_class)
+				f.write("average test AUC for %d class : %f %d\n" % (class_number, mean_auc_per_class[best_test_epoch_class], best_test_epoch_class))
+			f.write("\n")
+			f.write("\n")
 
-        wb = openpyxl.load_workbook('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
-        sheet1 = wb['table']
-        print(f'combination is {combination}')
-        print(f'best_test_AUC is {best_test_AUC}')
-        print(f'best_test_epoch is {best_test_epoch}')
-        print(f'[best_test_AUC, best_test_epoch] is {[best_test_AUC, best_test_epoch]}')
-        print(f'test_AUCs_by_epoch_class is {test_AUCs_by_epoch_class}')
-        print(f'test_AUCs_by_epoch_class.shape is {test_AUCs_by_epoch_class.shape}')
+		wb = openpyxl.load_workbook('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
+		sheet1 = wb['table']
+		print(f'combination is {combination}')
+		print(f'best_test_AUC is {best_test_AUC}')
+		print(f'best_test_epoch is {best_test_epoch}')
+		print(f'[best_test_AUC, best_test_epoch] is {[best_test_AUC, best_test_epoch]}')
+		print(f'test_AUCs_by_epoch_class is {test_AUCs_by_epoch_class}')
+		print(f'test_AUCs_by_epoch_class.shape is {test_AUCs_by_epoch_class.shape}')
 
-        combination_str = []
-        for comb in combination:
-            combination_str.append(str(comb))
+		combination_str = []
+		for comb in combination:
+			combination_str.append(str(comb))
 
-        new_row = [comb_index] + list(combination_str) + [best_test_AUC, best_test_epoch] + np.transpose(test_AUCs_by_epoch_class)[best_test_epoch].tolist()
-        print(f'new_row is {new_row}')
-        sheet1.append(new_row)
-        wb.save('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
+		new_row = [comb_index] + list(combination_str) + [best_test_AUC, best_test_epoch] + np.transpose(test_AUCs_by_epoch_class)[best_test_epoch].tolist()
+		print(f'new_row is {new_row}')
+		sheet1.append(new_row)
+		wb.save('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
 
 
 if __name__ == "__main__":
