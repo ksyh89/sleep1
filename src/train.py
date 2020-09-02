@@ -491,7 +491,8 @@ def train(info: TrainInformation, split, fold, combination, my_drive):
     model = torch.load(savepath)
     model.eval()
 
-    savepath_filenames = os.listdir(savepath)
+    savepath_filenames = os.listdir(savdir)
+
     """
     for savepath_filename in savepath_filenames:
         full_filename = os.path.join(savepath, savepath_filename)
@@ -501,11 +502,13 @@ def train(info: TrainInformation, split, fold, combination, my_drive):
     os.mkdir(savedir)
     # os.makedirs(savedir, exist_ok=True)
 
+    """
     for a_file in my_drive.ListFile({'q': "trashed = true"}).GetList():
         # print the name of the file being deleted.
         print(f'the file {a_file["title"]}, is about to get deleted permanently.')
         # delete the file permanently.
         a_file.Delete()
+    """
 
     test_input = test_dataset.data[:, 1:]
     test_label = test_dataset.data[:, :1]
