@@ -493,11 +493,12 @@ def train(info: TrainInformation, split, fold, combination, my_drive):
 
     savepath_filenames = os.listdir(savdir)
 
-    """
+    
     for savepath_filename in savepath_filenames:
         full_filename = os.path.join(savepath, savepath_filename)
         open(full_filename, 'w')
-    """
+
+
     shutil.rmtree(savedir)
     os.mkdir(savedir)
     # os.makedirs(savedir, exist_ok=True)
