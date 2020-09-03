@@ -491,11 +491,10 @@ def train(info: TrainInformation, split, fold, combination, my_drive):
     model = torch.load(savepath)
     model.eval()
 
-    savepath_filenames = os.listdir(savdir)
+    savepath_filenames = os.listdir(savedir)
 
-    
     for savepath_filename in savepath_filenames:
-        full_filename = os.path.join(savepath, savepath_filename)
+        full_filename = os.path.join(savedir, savepath_filename)
         open(full_filename, 'w')
 
 
