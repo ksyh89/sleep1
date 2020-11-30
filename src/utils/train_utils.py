@@ -194,8 +194,9 @@ def plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath="AUC.png")
     axes[1].plot([0, 1], [0, 1], linestyle="--")
     axes[1].set_title("ROC curve")
     """
-    plt.show()
+
     plt.savefig(savepath)
+    plt.show()
     print(savepath)
 
     return roc_auc
