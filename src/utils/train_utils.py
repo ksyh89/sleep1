@@ -147,7 +147,7 @@ def plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath="AUC.png")
     # Plot all ROC curves
     plt.figure()
     f, axes = plt.subplots(1, 2, sharex=True, sharey=True)
-    f.suptitle("AUC %.4f" % test_AUC)
+    # f.suptitle("AUC %.4f" % test_AUC)
     f.set_size_inches((16, 8))
 
     lw=2
@@ -156,6 +156,10 @@ def plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath="AUC.png")
              label='micro-average ROC curve (area = {0:0.2f})'
                    ''.format(roc_auc["micro"]),
              color='deeppink', linestyle=':', linewidth=4)
+
+#    axes[1].plot(fpr["micro"], tpr["micro"],
+#             label='Micro average ROC curve (AUC  ',
+#             color='deeppink', linestyle=':', linewidth=2)
 
     axes[1].plot(fpr["macro"], tpr["macro"],
              label='macro-average ROC curve (area = {0:0.2f})'

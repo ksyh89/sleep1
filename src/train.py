@@ -515,7 +515,7 @@ def train(info: TrainInformation, split, fold, combination, my_drive):
     test_preds = train_utils.get_preds(test_input, model)
     test_label_onehot = np.array([np.eye(int(np.max(test_label)+1), dtype=np.int_)[int(label)] for label in test_label])
     test_AUC = train_utils.compute_AUC(test_label_onehot, test_preds)
-    roc_auc = train_utils.plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath=savepath.replace(".pt", "_AUC.png"))
+    roc_auc = train_utils.plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath=savepath.replace(".pt", "_AUC.tiff"))
 
     """
     contributing_variables = compute_contributing_variables(model, test_dataset)

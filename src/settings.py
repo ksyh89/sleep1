@@ -66,7 +66,7 @@ class TrainInformation:
     """실험에 사용할 세팅을 저장한다."""
 
     
-    NAME = "name v3_actswish_bs4096_largercapa"
+    NAME = "name v3_actswish_bs4096_largercapa_multiclass"
     SEED = 0
     BS = 4096
     INIT_LR = 0.100000
