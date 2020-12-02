@@ -41,8 +41,7 @@ def compute_AUC(y, preds):
     y = y.astype(np.long)#.reshape([-1])
     preds = preds.astype(np.float32)#.reshape([-1])
     AUC = roc_auc_score(y, preds, multi_class='ovr')
-    AUC_micro = roc_auc_score(y, preds, multi_class='ovr', average='micro')
-    return AUC, AUC_micro
+    return AUC
 
 def compute_AUC_per_class(y, preds):
     """AUC 계산."""
@@ -59,7 +58,6 @@ def compute_AUC_per_class(y, preds):
     tpr = dict()
     roc_auc = []
     AUC_per_class = []
-    AUC_per_class_micro = []
     from sklearn.metrics import auc
     for i in range(n_class):
         fpr[i], tpr[i], _ = roc_curve(test_label_onehot[:, i], test_preds[:, i])
@@ -67,12 +65,11 @@ def compute_AUC_per_class(y, preds):
 
     for i in range(n_class):
         AUC_per_class.append(roc_auc_score(test_label_onehot[:, i], test_preds[:, i]))
-        AUC_per_class_micro.append(roc_auc_score(test_label_onehot[:, i], test_preds[:, i], average='micro'))
 
     # print(f'np.array(roc_auc).shape is {np.array(roc_auc).shape}')
     # print(f'np.array(AUC_per_class).shape is {np.array(AUC_per_class).shape}')
 
-    return AUC_per_class, AUC_per_class_micro
+    return AUC_per_class
 
 """
 def compute_accuracy(y, preds):

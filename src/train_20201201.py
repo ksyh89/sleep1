@@ -47,8 +47,8 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     test_preds = train_utils.get_preds(test_input, model)
     test_label_onehot = np.array([np.eye(int(np.max(test_label)+1), dtype=np.int_)[int(label)] for label in test_label])
 
-    test_AUC, test_AUC_micro = train_utils.compute_AUC(test_label_onehot, test_preds)
-    test_AUC_per_class, test_AUC_per_class_micro = train_utils.compute_AUC_per_class(test_label_onehot, test_preds)
+    test_AUC = train_utils.compute_AUC(test_label_onehot, test_preds)
+    test_AUC_per_class = train_utils.compute_AUC_per_class(test_label_onehot, test_preds)
     test_accuracy = train_utils.compute_accuracy(test_label, test_preds)
 
 
@@ -58,14 +58,12 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     train_preds = train_utils.get_preds(train_input, model)
     train_label_onehot = np.array([np.eye(int(np.max(train_label)+1), dtype=np.int_)[int(label)] for label in train_label])
 
-    train_AUC, train_AUC_micro = train_utils.compute_AUC(train_label_onehot, train_preds)
-    train_AUC_per_class, train_AUC_per_class_micro = train_utils.compute_AUC_per_class(train_label_onehot, train_preds)
+    train_AUC = train_utils.compute_AUC(train_label_onehot, train_preds)
+    train_AUC_per_class = train_utils.compute_AUC_per_class(train_label_onehot, train_preds)
     train_accuracy = train_utils.compute_accuracy(train_label, train_preds)
 
     train_result.test_AUC_list.append("%.04f" % test_AUC)
-    train_result.test_AUC_micro_list.append("%.04f" % test_AUC_micro)
     train_result.test_AUC_list_class.append(test_AUC_per_class)
-    train_result.test_AUC_list_class_micro.append(test_AUC_per_class_micro)
     train_result.test_accuracy_list.append("%.04f" % test_accuracy)
 
     #print(f'train_AUC_per_class is {train_AUC_per_class}')
@@ -96,7 +94,7 @@ def compute_contributing_variables(model, test_dataset):
         preds = train_utils.get_preds(val_data, model)
         target = test_dataset.data[:, :1]
         target_onehot = np.array([np.eye(int(np.max(target)+1), dtype=np.int_)[int(label)] for label in target])
-        test_AUC, test_AUC_micro = train_utils.compute_AUC(target_onehot, preds)
+        test_AUC = train_utils.compute_AUC(target_onehot, preds)
         print("%s %f" % (variable, test_AUC))
         AUCs.append(test_AUC)
 
@@ -214,7 +212,7 @@ def train_logisticregressoin(info: TrainInformation, split, fold):
     regressor = sklearn.linear_model.LogisticRegression()
     regressor.fit(train_dataset.train_data[:, 1:], test_dataset.train_data[:, :1])
     preds = regressor.predict_proba(test_dataset.data[:, 1:])[:, 1]
-    auc, auc_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds)
+    auc = train_utils.compute_AUC(test_dataset.data[:, :1], preds)
     print(auc)
     savepath = "/content/drive/My Drive/research/frontiers/checkpoints/logistic_regression/split_%02d.png" % split
     os.makedirs(os.path.dirname(savepath), exist_ok=True)
@@ -259,7 +257,7 @@ def train_supportvectormachine(info: TrainInformation, split, fold):
     Y = regressor.decision_function(test_dataset.data[:, 1:])
     preds = (Y - Y.min()) / (Y.max() - Y.min())
 
-    auc, auc_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds)
+    auc = train_utils.compute_AUC(test_dataset.data[:, :1], preds)
     print(auc)
     savepath = "/content/drive/My Drive/research/frontiers/checkpoints/logistic_regression/split_%02d.png" % split
     os.makedirs(os.path.dirname(savepath), exist_ok=True)
@@ -303,7 +301,7 @@ def train_RandomForestClassifier(info: TrainInformation, split, fold):
     regressor = sklearn.linear_model.LogisticRegression()
     regressor.fit(train_dataset.train_data[:, 1:], test_dataset.train_data[:, :1])
     preds_regressor = regressor.predict_proba(test_dataset.data[:, 1:])[:, 1]
-    auc_regressor, auc_regressor_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds_regressor)
+    auc_regressor = train_utils.compute_AUC(test_dataset.data[:, :1], preds_regressor)
     print(f'auc_regressor is {auc_regressor}')
 
     from sklearn.ensemble import RandomForestClassifier
@@ -312,7 +310,7 @@ def train_RandomForestClassifier(info: TrainInformation, split, fold):
     forest = RandomForestClassifier()
     forest.fit(train_dataset.train_data[:, 1:], test_dataset.train_data[:, :1])
     preds_forest = forest.predict_proba(test_dataset.data[:, 1:])[:, 1]
-    auc_forest, auc_forest_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds_forest)
+    auc_forest = train_utils.compute_AUC(test_dataset.data[:, :1], preds_forest)
     print(f'auc_forest is {auc_forest}')
     savepath = "/content/drive/My Drive/research/frontiers/checkpoints/random_forest/split_%02d.png" % split
     os.makedirs(os.path.dirname(savepath), exist_ok=True)
@@ -359,7 +357,7 @@ def train_ml_compare(info: TrainInformation, split, fold):
     regressor = sklearn.linear_model.LogisticRegression()
     regressor.fit(train_input, train_label)
     preds_regressor = regressor.predict_proba(test_dataset.data[:, 1:])[:, 1]
-    auc_regressor, auc_regressor_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds_regressor)
+    auc_regressor = train_utils.compute_AUC(test_dataset.data[:, :1], preds_regressor)
     print(f'auc_regressor is {auc_regressor}')
 
     ###########################################
@@ -373,7 +371,7 @@ def train_ml_compare(info: TrainInformation, split, fold):
     forest = RandomForestClassifier()
     forest.fit(train_input, train_label)
     preds_forest = forest.predict_proba(test_dataset.data[:, 1:])[:, 1]
-    auc_forest, auc_forest_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds_forest)
+    auc_forest = train_utils.compute_AUC(test_dataset.data[:, :1], preds_forest)
     print(f'auc_forest is {auc_forest}')
 
     ###########################################
@@ -387,7 +385,7 @@ def train_ml_compare(info: TrainInformation, split, fold):
     svc.fit(train_input, train_label)
     Y = svc.decision_function(test_dataset.data[:, 1:])
     preds_svc = (Y - Y.min()) / (Y.max() - Y.min())
-    auc_svc, auc_svc_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds_svc)
+    auc_svc = train_utils.compute_AUC(test_dataset.data[:, :1], preds_svc)
     print(f'auc_svc is {auc_svc}')
 
     ###########################################
@@ -516,7 +514,7 @@ def train(info: TrainInformation, split, fold, combination, my_drive):
     test_label = test_dataset.data[:, :1]
     test_preds = train_utils.get_preds(test_input, model)
     test_label_onehot = np.array([np.eye(int(np.max(test_label)+1), dtype=np.int_)[int(label)] for label in test_label])
-    test_AUC, test_AUC_micro = train_utils.compute_AUC(test_label_onehot, test_preds)
+    test_AUC = train_utils.compute_AUC(test_label_onehot, test_preds)
     roc_auc = train_utils.plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath=savepath.replace(".pt", "_AUC.tiff"))
 
     """
@@ -577,7 +575,7 @@ def run(filename, my_drive):
     write_ws = write_wb.create_sheet('table')
     write_ws.append(['comb_index', 'bs', 'init_lr', 'lr_decay', 'momentum', 'weight_decay',
         'optimizer_method', 'nchs', 'model_name', 'epoch', 'use_data_dropout', 'activation',
-        'best_test_auc', 'best_test_epoch', 'best_test_AUC_micro', 'class 0', 'class 1', 'class 2', 'class 3'])
+        'best_test_auc', 'best_test_epoch', 'class 0', 'class 1', 'class 2', 'class 3'])
     write_wb.save('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
 
     for comb_index, combination in enumerate(combinations):
@@ -587,10 +585,8 @@ def run(filename, my_drive):
         fold = info.FOLD
 
         test_AUCs_by_split = []
-        test_AUCs_micro_by_split = []
         test_AUCs_by_split_class = []
         test_AUCs_by_split_class_test = []
-        test_AUCs_by_split_class_micro = []
         for split in range(fold):
 
             #if split % 3 > 0:
@@ -606,45 +602,30 @@ def run(filename, my_drive):
 
             result, auc_class = train(info, split, fold, combination, my_drive)
             test_AUCs = [float(auc) for auc in result.test_AUC_list]
-            test_AUCs_micro = [float(auc) for auc in result.test_AUC_micro_list]
             test_AUCs_by_split.append(test_AUCs)
-            test_AUCs_micro_by_split.append(test_AUCs_micro)
             test_AUCs_by_split_class.append(np.array(result.test_AUC_list_class))
-            test_AUCs_by_split_class_micro.append(np.array(result.test_AUC_list_class_micro))
             test_AUCs_by_split_class_test.append(auc_class)
 
             print(f'test_AUCs_by_split is {test_AUCs_by_split}')
-            print(f'test_AUCs_micro_by_split is {test_AUCs_micro_by_split}')
             print(f'test_AUCs_by_split_class is {test_AUCs_by_split_class}')
             print(f'test_AUCs_by_split_class_test is {test_AUCs_by_split_class_test}')
-            print(f'test_AUCs_by_split_class_micro is {test_AUCs_by_split_class_micro}')
 
             print(f'np.array(test_AUCs_by_split).shape is {np.array(test_AUCs_by_split).shape}')
-            print(f'np.array(test_AUCs_micro_by_split).shape is {np.array(test_AUCs_micro_by_split).shape}')
             print(f'np.array(test_AUCs_by_split_class).shape is {np.array(test_AUCs_by_split_class).shape}')
             print(f'np.array(test_AUCs_by_split_class_test).shape is {np.array(test_AUCs_by_split_class_test).shape}')
-            print(f'np.array(test_AUCs_by_split_class_micro).shape is {np.array(test_AUCs_by_split_class_micro).shape}')
-
 
         with open("result.txt", "a") as f:
             test_AUCs_by_split = np.array(test_AUCs_by_split)
             test_AUCs_by_epoch = test_AUCs_by_split.mean(axis=0)
-            test_AUCs_micro_by_split = np.array(test_AUCs_micro_by_split)
-            test_AUCs_micro_by_epoch = test_AUCs_micro_by_split.mean(axis=0)
             test_AUCs_by_split_class = np.array(test_AUCs_by_split_class)
             test_AUCs_by_epoch_class = np.transpose(test_AUCs_by_split_class.mean(axis=0))
             test_AUCs_by_split_class_test = np.array(test_AUCs_by_split_class_test)
             test_AUCs_by_epoch_class_test = test_AUCs_by_split_class_test.mean(axis=0)
-            test_AUCs_by_split_class_micro = np.array(test_AUCs_by_split_class_micro)
-            test_AUCs_by_epoch_class_micro = np.transpose(test_AUCs_by_split_class_micro.mean(axis=0))
             best_test_epoch = np.argmax(test_AUCs_by_epoch)
             best_test_AUC = test_AUCs_by_epoch[best_test_epoch]
-            best_test_AUC_micro = test_AUCs_micro_by_epoch[best_test_epoch]
             #f.write(str(info) + "/n")
             f.write("Name: %s\n" % info.NAME)
             f.write("average test AUC: %f %d\n" % (best_test_AUC, best_test_epoch))
-
-            f.write("average test AUC micro: %f %d\n" % (best_test_AUC_micro, best_test_epoch))
 
             f.write("\n")
             f.write("best epoch\n")
@@ -669,7 +650,6 @@ def run(filename, my_drive):
         print(f'combination is {combination}')
         print(f'best_test_AUC is {best_test_AUC}')
         print(f'best_test_epoch is {best_test_epoch}')
-        print(f'best_test_AUC_micro is {best_test_AUC_micro}')
         print(f'[best_test_AUC, best_test_epoch] is {[best_test_AUC, best_test_epoch]}')
         print(f'test_AUCs_by_epoch_class is {test_AUCs_by_epoch_class}')
         print(f'test_AUCs_by_epoch_class.shape is {test_AUCs_by_epoch_class.shape}')
@@ -678,7 +658,7 @@ def run(filename, my_drive):
         for comb in combination:
             combination_str.append(str(comb))
 
-        new_row = [comb_index] + list(combination_str) + [best_test_AUC, best_test_epoch, best_test_AUC_micro] + np.transpose(test_AUCs_by_epoch_class)[best_test_epoch].tolist() + np.transpose(test_AUCs_by_epoch_class_micro)[best_test_epoch].tolist()
+        new_row = [comb_index] + list(combination_str) + [best_test_AUC, best_test_epoch] + np.transpose(test_AUCs_by_epoch_class)[best_test_epoch].tolist()
         print(f'new_row is {new_row}')
         sheet1.append(new_row)
         wb.save('/content/drive/My Drive/research/frontiers/performance/performance.xlsx')
