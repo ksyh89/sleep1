@@ -99,7 +99,7 @@ class TrainInformation:
     def save_result(self):
         """실험 결과를 파일에 적는다."""
             
-        with open("result.csv", "a") as f:
+        with open("/content/drive/My Drive/research/frontiers/result3/result.csv", "a") as f:
             members = {}
 
             for attr in dir(self):

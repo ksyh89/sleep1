@@ -555,7 +555,7 @@ def run(filename, my_drive):
     momentum = [0.9]  # 0.9, 0.99, 0.999, 0.8, 0.85
     weight_decay = [1e-6]  # 1e-6, 1e-7, 5e-7, 5e-6
     optimizer_method = ["Adadelta"]  # "SGD", "Adadelta"
-    nchs = [[2048, 2048, 2048, 2048, 2048, 512, 1]]  # [2048, 2048, 2048, 512, 1], [512, 512, 512, 512, 1], [512, 512, 1], [4096, 1]
+    nchs = [[2048, 2048, 2048, 2048, 2048, 512, 4]]  # [2048, 2048, 2048, 512, 1], [512, 512, 512, 512, 1], [512, 512, 1], [4096, 1]
     model_name = ["ClassifierWithAttention"]  # "ClassifierWithEmbedding", "Classifier", "ClassifierWithDropout", "ClassifierWithBatchNorm", "ClassifierWithAttention"
     epoch = [50]  # 26, 30, 40, 50
     use_data_dropout = ["use_data_dropout"]  # "use_data_dropout", None
@@ -626,7 +626,7 @@ def run(filename, my_drive):
             print(f'np.array(test_AUCs_by_split_class_micro).shape is {np.array(test_AUCs_by_split_class_micro).shape}')
 
 
-        with open("result.txt", "a") as f:
+        with open("/content/drive/My Drive/research/frontiers/result3/result.txt", "a") as f:
             test_AUCs_by_split = np.array(test_AUCs_by_split)
             test_AUCs_by_epoch = test_AUCs_by_split.mean(axis=0)
             test_AUCs_micro_by_split = np.array(test_AUCs_micro_by_split)
