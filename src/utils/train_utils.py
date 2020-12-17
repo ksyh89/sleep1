@@ -155,37 +155,53 @@ def plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath="AUC.png")
 
     lw=2
 
-    axes[1].plot(fpr["micro"], tpr["micro"],
-             label='micro-average ROC curve (area = {0:0.2f})'
-                   ''.format(roc_auc["micro"]),
-             color='deeppink', linestyle=':', linewidth=4)
-
 #    axes[1].plot(fpr["micro"], tpr["micro"],
-#             label='Micro average ROC curve (AUC  ',
-#             color='deeppink', linestyle=':', linewidth=2)
+#             label='micro-average ROC curve (area = {0:0.2f})'
+#                   ''.format(roc_auc["micro"]),
+#             color='deeppink', linestyle=':', linewidth=4)
+
+    axes[1].plot(fpr["micro"], tpr["micro"],
+             label='Micro-average ROC curve (AUC 0.927)',
+             color='deeppink', linestyle=':', linewidth=1)
+
+#    axes[1].plot(fpr["macro"], tpr["macro"],
+#             label='macro-average ROC curve (area = {0:0.2f})'
+#                   ''.format(roc_auc["macro"]),
+#             color='navy', linestyle=':', linewidth=4)
 
     axes[1].plot(fpr["macro"], tpr["macro"],
-             label='macro-average ROC curve (area = {0:0.2f})'
-                   ''.format(roc_auc["macro"]),
-             color='navy', linestyle=':', linewidth=4)
+             label='Macro-average ROC curve (AUC 0.847)',
+             color='navy', linestyle=':', linewidth=1)
 
-    from itertools import cycle
-    colors = cycle(['red', 'aqua', 'darkorange', 'cornflowerblue'])
-    for i, color in zip(range(n_class), colors):
-        axes[1].plot(fpr[i], tpr[i], color=color, lw=lw, label='ROC curve of class {0} (area = {1:0.2f})'
-            ''.format(i, roc_auc[i]))
-        axes[0].fill_between(recall[i], precision[i], step="post", alpha=0.2, color=color, label='class {0}'''.format(i))
+
+#    from itertools import cycle
+#    colors = cycle(['red', 'aqua', 'darkorange', 'cornflowerblue'])
+#    for i, color in zip(range(n_class), colors):
+#        axes[1].plot(fpr[i], tpr[i], color=color, lw=lw, label='Zone {0} (area = {1:0.2f})'
+#            ''.format(i+1, roc_auc[i]))
+#        axes[0].fill_between(recall[i], precision[i], step="post", alpha=0.2, color=color, label='class {0}'''.format(i))
+
+# 자동으로 하는 것 대신, 그냥 class를 4개 지정해서 색깔과 label을 입력함. 
     
-
+    axes[1].plot(fpr[0], tpr[0], color='red', lw=lw, label='Zone I (AUC 0.881)'
+    axes[1].plot(fpr[1], tpr[1], color='aqua', lw=lw, label='Zone II (AUC 0.774)'
+    axes[1].plot(fpr[2], tpr[2], color='darkorange', lw=lw, label='Zone III (AUC 0.853)'
+    axes[1].plot(fpr[3], tpr[3], color='cornflowerblue', lw=lw, label='Zone IV (AUC 0.879)'
+                 
+    axes[0].fill_between(recall[0], precision[0], step="post", alpha=0.2, color='red', label='Zone I')
+    axes[0].fill_between(recall[1], precision[1], step="post", alpha=0.2, color='aqua', label='Zone II')
+    axes[0].fill_between(recall[2], precision[2], step="post", alpha=0.2, color='darkorange', label='Zone III')
+    axes[0].fill_between(recall[3], precision[3], step="post", alpha=0.2, color='cornflowerblue', label='Zone IV')
+    
     axes[1].plot([0, 1], [0, 1], 'k--', lw=lw)
     axes[1].set_xlim([0.0, 1.0])
     axes[1].set_ylim([0.0, 1.05])
-    axes[1].set_xlabel('False Positive Rate')
-    axes[1].set_ylabel('True Positive Rate')
-    axes[1].set_title("ROC curve")
+    axes[1].set_xlabel('False Positive Rate', fontsize=12)
+    axes[1].set_ylabel('True Positive Rate', fontsize=12)
+    axes[1].set_title("Receiver Operating Characteristic Curve", fontsize =14)
     axes[1].legend(loc="lower right")
     axes[0].legend(loc="lower right")
-    axes[0].set_title("Recall-Precision Curve")
+    axes[0].set_title("Recall-Precision Curve", fontsize =14)
 
     """
     plt.figure()
