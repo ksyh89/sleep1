@@ -511,13 +511,16 @@ def train(info: TrainInformation, split, fold, combination, my_drive):
         # delete the file permanently.
         a_file.Delete()
     """
+    savedir2 = "/content/drive/My Drive/research/frontiers/result3/%s" % exp_name
+    savepath2 = "%s/epoch_%04d_fold_%02d_AUC.tiff" % (savedir2, best_test_epoch, train_dataset.split)
 
     test_input = test_dataset.data[:, 1:]
     test_label = test_dataset.data[:, :1]
     test_preds = train_utils.get_preds(test_input, model)
     test_label_onehot = np.array([np.eye(int(np.max(test_label)+1), dtype=np.int_)[int(label)] for label in test_label])
     test_AUC, test_AUC_micro = train_utils.compute_AUC(test_label_onehot, test_preds)
-    roc_auc = train_utils.plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath=savepath.replace(".pt", "_AUC.tiff"))
+#    roc_auc = train_utils.plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath=savepath.replace(".pt", "_AUC.tiff"))
+    roc_auc = train_utils.plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath2)
 
     """
     contributing_variables = compute_contributing_variables(model, test_dataset)
