@@ -51,6 +51,8 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     test_AUC_per_class, test_AUC_per_class_micro = train_utils.compute_AUC_per_class(test_label_onehot, test_preds)
     test_accuracy = train_utils.compute_accuracy(test_label, test_preds)
 
+    M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33 = train_utils.compute_confusion(test_label, test_preds)
+    
 
     #train_preds = train_utils.get_preds(train_dataset.data[:1000, 1:], model)
     train_input = train_dataset.data[:1000, 1:]
@@ -68,12 +70,32 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     train_result.test_AUC_list_class_micro.append(test_AUC_per_class_micro)
     train_result.test_accuracy_list.append("%.04f" % test_accuracy)
 
+    train_result.M00_list.append("%.04f" % M00)
+    train_result.M10_list.append("%.04f" % M10)
+    train_result.M20_list.append("%.04f" % M20)
+    train_result.M30_list.append("%.04f" % M30)
+    
+    train_result.M01_list.append("%.04f" % M01)
+    train_result.M11_list.append("%.04f" % M11)
+    train_result.M21_list.append("%.04f" % M21)
+    train_result.M31_list.append("%.04f" % M31)
+    
+    train_result.M02_list.append("%.04f" % M02)
+    train_result.M12_list.append("%.04f" % M12)
+    train_result.M22_list.append("%.04f" % M22)
+    train_result.M32_list.append("%.04f" % M32)
+
+    train_result.M03_list.append("%.04f" % M03)
+    train_result.M13_list.append("%.04f" % M13)
+    train_result.M23_list.append("%.04f" % M23)
+    train_result.M33_list.append("%.04f" % M33)
+
     #print(f'train_AUC_per_class is {train_AUC_per_class}')
     #print(f'train_AUC is {train_AUC}')
     #print(f'test_AUC_per_class is {test_AUC_per_class}')
     #print(f'test_AUC is {test_AUC}')
 
-    return train_AUC, test_AUC, train_accuracy, test_accuracy, test_preds
+    return train_AUC, test_AUC, train_accuracy, test_accuracy, test_preds, M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33
 
 
 def compute_contributing_variables(model, test_dataset):
@@ -153,7 +175,7 @@ def train_step(
         param_group["lr"] = lr
     print("Learning rate = %f" % lr)
 
-    train_AUC, test_AUC, train_accuracy, test_accuracy, test_preds = print_metrics(model,
+    train_AUC, test_AUC, train_accuracy, test_accuracy, test_preds, M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33 = print_metrics(model,
                                                                                    train_dataset,
                                                                                    test_dataset,
                                                                                    train_result)
@@ -185,6 +207,12 @@ def train_step(
     print(
         "            test_accuracy {:.4f}, train_accuracy {:.4f}".format(
             test_accuracy, train_accuracy,
+        )
+    )
+
+    print(
+        " M00 {}, M10 {}, M20 {} , M30 {} , M01 {}, M11 {} , M21 {}, M31 {}, M02 {}, M12 {}, M22 {}, M32 {}, M03 {}, M13 {}, M23 {}, M33 {}".format(
+            M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33
         )
     )
 

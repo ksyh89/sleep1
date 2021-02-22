@@ -89,6 +89,52 @@ def compute_accuracy(y, preds):
     return accuracy
 
 
+def compute_confusion(y, preds):
+    """confusion matrix 계산."""
+
+    m00 = ((np.concatenate(y).astype(int) == 0)) & ((np.argmax(preds, axis=1).astype(int)) == 0)
+    m10 = ((np.concatenate(y).astype(int) == 1)) & ((np.argmax(preds, axis=1).astype(int)) == 0)
+    m20 = ((np.concatenate(y).astype(int) == 2)) & ((np.argmax(preds, axis=1).astype(int)) == 0)
+    m30 = ((np.concatenate(y).astype(int) == 3)) & ((np.argmax(preds, axis=1).astype(int)) == 0)
+
+    m01 = ((np.concatenate(y).astype(int) == 0)) & ((np.argmax(preds, axis=1).astype(int)) == 1)
+    m11 = ((np.concatenate(y).astype(int) == 1)) & ((np.argmax(preds, axis=1).astype(int)) == 1)
+    m21 = ((np.concatenate(y).astype(int) == 2)) & ((np.argmax(preds, axis=1).astype(int)) == 1)
+    m31 = ((np.concatenate(y).astype(int) == 3)) & ((np.argmax(preds, axis=1).astype(int)) == 1)
+
+    m02 = ((np.concatenate(y).astype(int) == 0)) & ((np.argmax(preds, axis=1).astype(int)) == 2)
+    m12 = ((np.concatenate(y).astype(int) == 1)) & ((np.argmax(preds, axis=1).astype(int)) == 2)
+    m22 = ((np.concatenate(y).astype(int) == 2)) & ((np.argmax(preds, axis=1).astype(int)) == 2)
+    m32 = ((np.concatenate(y).astype(int) == 3)) & ((np.argmax(preds, axis=1).astype(int)) == 2)
+
+    m03 = ((np.concatenate(y).astype(int) == 0)) & ((np.argmax(preds, axis=1).astype(int)) == 3)
+    m13 = ((np.concatenate(y).astype(int) == 1)) & ((np.argmax(preds, axis=1).astype(int)) == 3)
+    m23 = ((np.concatenate(y).astype(int) == 2)) & ((np.argmax(preds, axis=1).astype(int)) == 3)
+    m33 = ((np.concatenate(y).astype(int) == 3)) & ((np.argmax(preds, axis=1).astype(int)) == 3)
+
+    M00 = np.sum(m00)
+    M10 = np.sum(m10)
+    M20 = np.sum(m20)
+    M30 = np.sum(m30)
+
+    M01 = np.sum(m01)
+    M11 = np.sum(m11)
+    M21 = np.sum(m21)
+    M31 = np.sum(m31)
+
+    M02 = np.sum(m02)
+    M12 = np.sum(m12)
+    M22 = np.sum(m22)
+    M32 = np.sum(m32)
+
+    M03 = np.sum(m03)
+    M13 = np.sum(m13)
+    M23 = np.sum(m23)
+    M33 = np.sum(m33)
+
+    return M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33
+
+
 def plot_AUC(test_dataset, test_preds, test_AUC, savepath="AUC.png"):
     """Validation set에 대한 AUC를 Plot으로 그린다."""
     precision, recall, _ = precision_recall_curve(test_dataset.data[:, :1], test_preds[:, 1])

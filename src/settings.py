@@ -24,6 +24,26 @@ class TrainResult:
         self.test_AUC_list_class = []
         self.test_AUC_list_class_micro = []
         self.test_accuracy_list = []
+        
+        self.M00_list = []
+        self.M10_list = []
+        self.M20_list = []
+        self.M30_list = []
+
+        self.M01_list = []
+        self.M11_list = []
+        self.M21_list = []
+        self.M31_list = []
+
+        self.M02_list = []
+        self.M12_list = []
+        self.M22_list = []
+        self.M32_list = []
+
+        self.M03_list = []
+        self.M13_list = []
+        self.M23_list = []
+        self.M33_list = []
 
         self.best_val_AUC = 0
         self.best_val_epoch = 0
