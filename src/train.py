@@ -51,6 +51,8 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     test_AUC_per_class, test_AUC_per_class_micro = train_utils.compute_AUC_per_class(test_label_onehot, test_preds)
     test_accuracy = train_utils.compute_accuracy(test_label, test_preds)
 
+    test_f1 = train_utils.compute_f1(test_label_onehot, test_preds)
+
     M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33 = train_utils.compute_confusion(test_label, test_preds)
     
 
@@ -68,6 +70,7 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     train_result.test_AUC_micro_list.append("%.04f" % test_AUC_micro)
     train_result.test_AUC_list_class.append(test_AUC_per_class)
     train_result.test_AUC_list_class_micro.append(test_AUC_per_class_micro)
+    train_result.test_f1_list.append("%.04f" % test_f1)
     train_result.test_accuracy_list.append("%.04f" % test_accuracy)
 
     train_result.M00_list.append("%.04f" % M00)
@@ -95,7 +98,7 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     #print(f'test_AUC_per_class is {test_AUC_per_class}')
     #print(f'test_AUC is {test_AUC}')
 
-    return train_AUC, test_AUC, train_accuracy, test_accuracy, test_preds, M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33
+    return train_AUC, test_AUC, train_accuracy, test_accuracy, test_preds, test_f1, M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33
 
 
 def compute_contributing_variables(model, test_dataset):
@@ -175,7 +178,7 @@ def train_step(
         param_group["lr"] = lr
     print("Learning rate = %f" % lr)
 
-    train_AUC, test_AUC, train_accuracy, test_accuracy, test_preds, M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33 = print_metrics(model,
+    train_AUC, test_AUC, train_accuracy, test_accuracy, test_preds, test_f1, M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33 = print_metrics(model,
                                                                                    train_dataset,
                                                                                    test_dataset,
                                                                                    train_result)
@@ -213,6 +216,12 @@ def train_step(
     print(
         " M00 {}, M10 {}, M20 {} , M30 {} , M01 {}, M11 {} , M21 {}, M31 {}, M02 {}, M12 {}, M22 {}, M32 {}, M03 {}, M13 {}, M23 {}, M33 {}".format(
             M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33
+        )
+    )
+
+    print(
+        "            F1_score {:.4f}        ".format(
+            test_f1
         )
     )
 

@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve
+from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve, f1_score
 
 """
 def get_preds(X, model):
@@ -36,6 +36,16 @@ def compute_AUC(y, preds):
     AUC = roc_auc_score(y, preds)
     return AUC
 """
+
+
+def compute_f1(y, preds):
+    y = y.astype(np.long)
+    preds = preds.astype(np.float32)
+    f1 = f1_score(y, preds, average='weighted')
+
+    return f1
+
+
 def compute_AUC(y, preds):
     """AUC 계산."""
     y = y.astype(np.long)#.reshape([-1])

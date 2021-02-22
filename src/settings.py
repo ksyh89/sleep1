@@ -23,6 +23,7 @@ class TrainResult:
         self.test_AUC_micro_list = []
         self.test_AUC_list_class = []
         self.test_AUC_list_class_micro = []
+        self.test_f1_list = []
         self.test_accuracy_list = []
         
         self.M00_list = []
