@@ -51,7 +51,7 @@ def print_metrics(model, train_dataset, test_dataset, train_result):
     test_AUC_per_class, test_AUC_per_class_micro = train_utils.compute_AUC_per_class(test_label_onehot, test_preds)
     test_accuracy = train_utils.compute_accuracy(test_label, test_preds)
 
-    test_f1 = train_utils.compute_f1(test_label_onehot, test_preds)
+    test_f1 = train_utils.compute_f1(test_label, test_preds)
 
     M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33 = train_utils.compute_confusion(test_label, test_preds)
     
@@ -224,6 +224,27 @@ def train_step(
             test_f1
         )
     )
+
+    if train_result.best_test_f1 < test_f1:
+        train_result.best_test_f1 = test_f1
+        train_result.best_test_f1_epoch = ep
+        #if ep - prev_plot > 10:
+            # 너무 자주 찍지 말고 한번 plot 찍고 epoch 10번 이상인 경우에만 찍는다.
+            #prev_plot = ep
+            #train_utils.plot_AUC(test_dataset, test_preds, test_AUC)
+        #contributing_variables = compute_contributing_variables(model, test_dataset)
+
+    print(
+        "Epoch %03d: test_f1: %.4f (best: %.4f f1_epoch: %d) "
+        % (
+            ep,
+            test_f1,
+            train_result.best_test_f1,
+            train_result.best_test_f1_epoch
+        )
+    )
+
+
 
 
 def train_logisticregressoin(info: TrainInformation, split, fold):

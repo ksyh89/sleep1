@@ -39,8 +39,8 @@ def compute_AUC(y, preds):
 
 
 def compute_f1(y, preds):
-    y = y.astype(np.long)
-    preds = preds.astype(np.float32)
+    y = np.concatenate(y).astype(int)
+    preds = np.argmax(preds, axis=1).astype(int)
     f1 = f1_score(y, preds, average='weighted')
 
     return f1
