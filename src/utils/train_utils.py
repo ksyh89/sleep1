@@ -41,7 +41,7 @@ def compute_AUC(y, preds):
 def compute_f1(y, preds):
     y = np.concatenate(y).astype(int)
     preds = np.argmax(preds, axis=1).astype(int)
-    f1 = f1_score(y, preds, average='weighted')
+    f1 = f1_score(y, preds, average='macro')
 
     return f1
 
