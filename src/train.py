@@ -235,9 +235,8 @@ def train_step(
         #contributing_variables = compute_contributing_variables(model, test_dataset)
 
     print(
-        "Epoch %03d: test_f1: %.4f (best: %.4f f1_epoch: %d) "
+        "F1 : test_f1: %.4f (best: %.4f f1_epoch: %d) "
         % (
-            ep,
             test_f1,
             train_result.best_test_f1,
             train_result.best_test_f1_epoch
