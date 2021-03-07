@@ -64,7 +64,7 @@ def compute_AUC_per_class(y, preds):
     test_preds = preds
     n_class = int(y.shape[1])
     # print(f'n_class is {n_class}')
-    
+
     fpr = dict()
     tpr = dict()
     roc_auc = []
@@ -101,6 +101,26 @@ def compute_accuracy(y, preds):
 
 def compute_confusion(y, preds):
     """confusion matrix 계산."""
+
+    def softmax(x):
+        max = np.max(x, axis=1, keepdims=True)  # returns max of each row and keeps same dims
+        e_x = np.exp(x - max)  # subtracts each row with its max value
+        sum = np.sum(e_x, axis=1, keepdims=True)  # returns sum of each row and keeps same dims
+        f_x = e_x / sum
+        return f_x
+
+    preds = softmax(preds)
+
+    n = preds.shape[0]
+    scalar = 1
+
+    a = [[-0.1, -0.05, 0, 0]] * n
+    a = np.array(a)
+    a = scalar * a
+
+    preds = a + preds
+
+    print(preds)
 
     m00 = ((np.concatenate(y).astype(int) == 0)) & ((np.argmax(preds, axis=1).astype(int)) == 0)
     m10 = ((np.concatenate(y).astype(int) == 1)) & ((np.argmax(preds, axis=1).astype(int)) == 0)
@@ -167,7 +187,7 @@ def plot_AUC(test_dataset, test_preds, test_AUC, savepath="AUC.png"):
 
 def plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath="AUC.png"):
     """Validation set에 대한 AUC를 Plot으로 그린다."""
-    
+
     test_label = test_dataset.data[:, :1]
     n_class = int(np.max(test_label)+1)
     test_label_onehot = np.array([np.eye(n_class, dtype=np.int_)[int(label)] for label in test_label])
@@ -237,13 +257,13 @@ def plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath="AUC.png")
 #            ''.format(i+1, roc_auc[i]))
 #        axes[0].fill_between(recall[i], precision[i], step="post", alpha=0.2, color=color, label='class {0}'''.format(i))
 
-# 자동으로 하는 것 대신, 그냥 class를 4개 지정해서 색깔과 label을 입력함. 
-    
+# 자동으로 하는 것 대신, 그냥 class를 4개 지정해서 색깔과 label을 입력함.
+
     axes.plot(fpr[0], tpr[0], color='red', lw=lw, label='Zone I (AUC 0.881)')
     axes.plot(fpr[1], tpr[1], color='aqua', lw=lw, label='Zone II (AUC 0.774)')
     axes.plot(fpr[2], tpr[2], color='darkorange', lw=lw, label='Zone III (AUC 0.853)')
     axes.plot(fpr[3], tpr[3], color='cornflowerblue', lw=lw, label='Zone IV (AUC 0.879)')
-                 
+
 #    axes[0].fill_between(recall[0], precision[0], step="post", alpha=0.2, color='red', label='Zone I')
 #    axes[0].fill_between(recall[1], precision[1], step="post", alpha=0.2, color='aqua', label='Zone II')
 #    axes[0].fill_between(recall[2], precision[2], step="post", alpha=0.2, color='darkorange', label='Zone III')
