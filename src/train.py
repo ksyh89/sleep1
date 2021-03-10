@@ -271,7 +271,12 @@ def train_logisticregressoin(info: TrainInformation, split, fold):
     regressor = sklearn.linear_model.LogisticRegression()
     regressor.fit(train_dataset.train_data[:, 1:], test_dataset.train_data[:, :1])
     preds = regressor.predict_proba(test_dataset.data[:, 1:])[:, 1]
-    auc, auc_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds)
+
+    test_label = test_dataset.data[:, :1]
+    test_label_onehot = np.array([np.eye(int(np.max(test_label)+1), dtype=np.int_)[int(label)] for label in test_label])
+
+
+    auc, auc_micro = train_utils.compute_AUC_per_class(test_label_onehot, preds)
     print(auc)
     savepath = "/content/drive/My Drive/research/frontiers/checkpoints/logistic_regression/split_%02d.png" % split
     os.makedirs(os.path.dirname(savepath), exist_ok=True)
@@ -408,6 +413,11 @@ def train_ml_compare(info: TrainInformation, split, fold):
 
     train_input = train_dataset.train_data[:, 1:]
     train_label = test_dataset.train_data[:, :1]
+    train_label_onehot = np.array([np.eye(int(np.max(train_label) + 1), dtype=np.int_)[int(label)] for label in train_label])
+
+
+    test_label = test_dataset.data[:, :1]
+    test_label_onehot = np.array([np.eye(int(np.max(test_label) + 1), dtype=np.int_)[int(label)] for label in test_label])
 
     # logisticregressoin ######################
 
@@ -416,11 +426,19 @@ def train_ml_compare(info: TrainInformation, split, fold):
     regressor = sklearn.linear_model.LogisticRegression()
     regressor.fit(train_input, train_label)
     preds_regressor = regressor.predict_proba(test_dataset.data[:, 1:])[:, 1]
-    auc_regressor, auc_regressor_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds_regressor)
-    print(f'auc_regressor is {auc_regressor}')
+    prediction = regressor.predict(test_dataset.data[:, 1:])
+    from sklearn.metrics import confusion_matrix
+    confusion_matrix(test_label, prediction)
+    a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16 = confusion_matrix(test_label, prediction).ravel()
+    print(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16)
+
+    from sklearn.metrics import classification_report
+    print(classification_report(test_label, prediction))
+
+    #auc_regressor, auc_regressor_micro = train_utils.compute_AUC_per_class(test_label_onehot, preds_regressor)
+    #print(f'auc_regressor is {auc_regressor}')
 
     ###########################################
-
 
     # randomforest ############################
 
@@ -429,12 +447,14 @@ def train_ml_compare(info: TrainInformation, split, fold):
 
     forest = RandomForestClassifier()
     forest.fit(train_input, train_label)
-    preds_forest = forest.predict_proba(test_dataset.data[:, 1:])[:, 1]
-    auc_forest, auc_forest_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds_forest)
-    print(f'auc_forest is {auc_forest}')
+
+    print(classification_report(test_label, forest.predict(test_dataset.data[:, 1:])))
+
+#    preds_forest = forest.predict_proba(test_dataset.data[:, 1:])[:, 1]
+#    auc_forest, auc_forest_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds_forest)
+#    print(f'auc_forest is {auc_forest}')
 
     ###########################################
-
 
     # svc #####################################
 
@@ -444,10 +464,28 @@ def train_ml_compare(info: TrainInformation, split, fold):
     svc.fit(train_input, train_label)
     Y = svc.decision_function(test_dataset.data[:, 1:])
     preds_svc = (Y - Y.min()) / (Y.max() - Y.min())
-    auc_svc, auc_svc_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds_svc)
-    print(f'auc_svc is {auc_svc}')
+
+    print(classification_report(test_label, svc.predict(test_dataset.data[:, 1:])))
+#    auc_svc, auc_svc_micro = train_utils.compute_AUC(test_dataset.data[:, :1], preds_svc)
+#    print(f'auc_svc is {auc_svc}')
 
     ###########################################
+
+    # kneighbors ############################
+
+    from sklearn.neighbors import KNeighborsClassifier
+
+    kneighbors = KNeighborsClassifier()
+    kneighbors.fit(train_input, train_label)
+    preds_kneighbors = kneighbors.predict_proba(test_dataset.data[:, 1:])[:, 1]
+    print(classification_report(test_label, kneighbors.predict(test_dataset.data[:, 1:])))
+
+#    auc_kneighbors = train_utils.compute_AUC(test_dataset.data[:, :1], preds_kneighbors)
+#    print(f'auc_kneighbors is {auc_kneighbors}')
+
+    ###########################################
+
+
 
     savepath = "/content/drive/My Drive/research/frontiers/checkpoints/ml_compare/split_%02d.png" % split
     os.makedirs(os.path.dirname(savepath), exist_ok=True)

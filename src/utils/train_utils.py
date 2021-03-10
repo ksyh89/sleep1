@@ -114,13 +114,11 @@ def compute_confusion(y, preds):
     n = preds.shape[0]
     scalar = 1
 
-    a = [[-0.1, -0.05, 0, 0]] * n
+    a = [[0, 0, 0, 0]] * n
     a = np.array(a)
     a = scalar * a
 
     preds = a + preds
-
-    print(preds)
 
     m00 = ((np.concatenate(y).astype(int) == 0)) & ((np.argmax(preds, axis=1).astype(int)) == 0)
     m10 = ((np.concatenate(y).astype(int) == 1)) & ((np.argmax(preds, axis=1).astype(int)) == 0)
