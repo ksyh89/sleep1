@@ -68,8 +68,24 @@ def get_activation(type):
         return torch.nn.ReLU()
     elif type == "LReLU":
         return torch.nn.LeakyReLU()
+    elif type == "Hardtanh":
+        return torch.nn.Hardtanh()
+    elif type == "Hardswish":
+        return torch.nn.Hardswish()
+    elif type == "LogSigmoid":
+        return torch.nn.LogSigmoid()
     elif type == "swish":
         return Swish()
+    elif type == "MultiheadAttention":
+        return torch.nn.MultiheadAttention()
+    elif type == "Sigmoid":
+        return torch.nn.Sigmoid()
+    elif type == "Tanhshrink":
+        return torch.nn.Tanhshrink()
+    elif type == "Threshold":
+        return torch.nn.Threshold()
+    elif type == "SELU":
+        return torch.nn.SELU()
     else:
         raise ValueError(type)
 
