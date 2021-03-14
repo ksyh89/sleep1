@@ -293,7 +293,7 @@ def plot_AUC_multi_class(test_dataset, test_preds, test_AUC, savepath="AUC.png")
     axes[1].set_title("ROC curve")
     """
 
-    plt.savefig(savepath)
+    plt.savefig(savepath, dpi=300)
     plt.show()
     print(savepath)
 
