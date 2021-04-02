@@ -626,7 +626,7 @@ def run(filename):
         test_AUCs_by_split.append(test_AUCs)
         test_PRAUCs_by_split.append(test_PRAUCs)
 
-    with open("/content/drive/My Drive/research/frontiers/result2/result.txt", "a") as f:
+    with open("/content/drive/My Drive/research/frontiers/result2/result_sleep.txt", "a") as f:
         test_AUCs_by_split = np.array(test_AUCs_by_split)
         test_PRAUCs_by_split = np.array(test_PRAUCs_by_split)
 
@@ -646,5 +646,5 @@ def run(filename):
 
 if __name__ == "__main__":
     # train 함수를 직접 호출했을 때 실행.
-    data_path = "../datasets/medical_data_6_no_space.csv"
+    data_path = "../datasets/sleep1_no_space.csv"
     run(data_path)
