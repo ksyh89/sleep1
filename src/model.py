@@ -93,10 +93,10 @@ class ClassifierWithBatchNorm(torch.nn.Sequential):
 class ClassifierWithEmbedding(torch.nn.Module):
     def __init__(self, inch, act, nchs_orig: list):
         super().__init__()
-        assert inch % 17 == 0, "Every variable must have the same dimension (17)"
-        embd_ch = (inch // 17) * 8
+        assert inch % 25 == 0, "Every variable must have the same dimension (17)"
+        embd_ch = (inch // 25) * 8
         self.projector = torch.nn.Sequential(
-            torch.nn.Conv1d(inch, embd_ch, 1, groups=inch // 17),
+            torch.nn.Conv1d(inch, embd_ch, 1, groups=inch // 25),
             get_activation(act)
         )
         self.classifier = ClassifierWithBatchNorm(embd_ch, act, nchs_orig)
@@ -112,13 +112,13 @@ class ClassifierWithEmbedding(torch.nn.Module):
 class ClassifierWithAttention(torch.nn.Module):
     def __init__(self, inch, act, nchs_orig: list):
         super().__init__()
-        assert inch % 17 == 0, "Every variable must have the same dimension (17)"
-        embd_ch = (inch // 17) * 16
+        assert inch % 25 == 0, "Every variable must have the same dimension (17)"
+        embd_ch = (inch // 25) * 16
         self.projector = torch.nn.Sequential(
-            torch.nn.Conv1d(inch, embd_ch, 1, groups=inch // 17),
+            torch.nn.Conv1d(inch, embd_ch, 1, groups=inch // 25),
             get_activation(act)
         )
-        self.classifier = ClassifierWithBatchNorm(embd_ch // 2 + (inch // 17) ** 2, act, nchs_orig)
+        self.classifier = ClassifierWithBatchNorm(embd_ch // 2 + (inch // 25) ** 2, act, nchs_orig)
         #self.classifier = ClassifierWithDropout(embd_ch, act, nchs_orig)
 
     def forward(self, x):

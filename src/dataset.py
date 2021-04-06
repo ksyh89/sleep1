@@ -201,7 +201,7 @@ class Dataset(data.Dataset):
             print(col.shape)
             #col = np.stack(col, axis=1)
             colsize = col.shape[1]
-            col = np.concatenate([col, np.zeros((col.shape[0], 17 - colsize), dtype=col.dtype)], axis=1)
+            col = np.concatenate([col, np.zeros((col.shape[0], 25 - colsize), dtype=col.dtype)], axis=1)
             print(column_name, col.shape)
             # input()
             all_columns.append(col)
@@ -221,8 +221,8 @@ class Dataset(data.Dataset):
         x = row[1:]
 
         if self.use_data_dropout:
-            num_variables = x.shape[0] // 17
-            x = x.reshape((num_variables, 17))
+            num_variables = x.shape[0] // 25
+            x = x.reshape((num_variables, 25))
             #dropout_indices = np.random.randint(num_variables)
             dropout_indices = np.random.choice(np.arange(num_variables), size=(int(num_variables // 8)),
                                                replace=False)
